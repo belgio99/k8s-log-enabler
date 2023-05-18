@@ -2,7 +2,6 @@ import os, sys
 
 def checkIfKubernetesIsInstalled():
       print("Checking if Kubernetes is installed...")
-      #run
       if os.system("kubectl version --short") == 0:
          print("Kubernetes is installed")
          return True
