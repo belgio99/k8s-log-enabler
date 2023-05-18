@@ -1,55 +1,31 @@
-import os, sys
+import argparse
 
-def checkIfKubernetesIsInstalled():
-      print("Checking if Kubernetes is installed...")
-      if os.system("kubectl version --short") == 0:
-         print("Kubernetes is installed")
-         return True
-      else:
-            print("Kubernetes is not installed")
-            return False
+from utils import *
+from istio import *
+from kubernetes import *
 
-def checkIfIstioIsInstalled():
-      print("Checking if Istio is installed...")
-      if os.system("istioctl version") == 0:
-         print("Istio is installed")
-         return True
-      else:
-            print("Istio is not installed")
-            return False
+
 
 def parseArgs():
-    print("Parsing arguments...")
-    argsNumber = len(sys.argv)
-    if argsNumber!=2: 
-          print("Error: wrong number of arguments")
-          print("Usage: python3 progettotesi.py <Kubernetes YAML file to process>")
-          sys.exit(1)
-    else:
-            print("Correct number of arguments")
-            return sys.argv[1]
-    
-def openFile(kubernetesManifest):
-      print("Opening file...")
-      try:
-            file = open(kubernetesManifest, "r")
-            print("File opened correctly")
-            return file
-      except IOError:
-            print("Error: file not found")
-            sys.exit(1)
+
+    parser = argparse.ArgumentParser(description="Progetto Tesi")
+    parser.add_argument("--istio-profile", help="Name of the Istio profile to use. See https://istio.io/latest/docs/setup/additional-setup/config-profiles/ for more information. You cannot use this option and --istio-file at the same time.")
+    parser.add_argument("--istio-file", help="If you already have a custom Istio file, you can specify it here. You cannot use this option and --istio-profile at the same time.")
+    parser.add_argument("--k8s-namespace",  default="default", help="The Kubernetes namespace to use. If not specified, the default namespace will be used.")
+    parser.add_argument("--auto-sc-inject", action="store_true", help="Enable automatic sidecar injection for the specified namespace. If not specified, automatic sidecar injection will be disabled for the specified namespace.")
+    #parser.add_argument("--dry-run", action="store_true", help="Dry run the YAML file without applying it")
+    return parser.parse_args()
 
 
 
 def main():
-    print("PROGETTO TESI - LOG ANALYZER")
-    print()
-    checkIfKubernetesIsInstalled()
-    yamlFile = parseArgs()
-    #openFile(yamlFile)
+    args = parseArgs()
+    checkInstallation()
+    installIstioConfig(args.istio_profile, args.istio_file)
+    if args.auto_sc_inject:
+        enableSidecarInjection(args.k8s_namespace)
 
-
-
+    
 
 
 if(__name__ == "__main__"):

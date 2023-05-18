@@ -1,0 +1,7 @@
+# Ignore Istio config files
+istioConfig.yaml
+newIstioConfig.yaml
+
+yRCA/
+
+__pycache__/
