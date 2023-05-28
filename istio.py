@@ -2,8 +2,8 @@ import os, sys, yaml, subprocess
 
 ACCESS_LOG_FILE = "/dev/stdout"
 ACCESS_LOG_ENCODING = "JSON"
-ORIG_ISTIO_FILENAME = "istioConfig" # the YAML file containing the original Istio configuration
-NEW_ISTIO_FILENAME = "newistioConfig" # the YAML file containing the edited Istio configuration (with access logs)
+ORIG_ISTIO_FILENAME = "input/istioConfig" # the YAML file containing the original Istio configuration
+NEW_ISTIO_FILENAME = "output/newistioConfig" # the YAML file containing the edited Istio configuration (with access logs)
 
 
 

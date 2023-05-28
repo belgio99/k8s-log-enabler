@@ -21,8 +21,6 @@ def main():
     args = parseArgs()
     checkInstallation()
     installIstioConfig(args.istio_profile, args.istio_file)
-    if args.auto_sc_inject:
-        enableSidecarInjection(args.k8s_namespace)
 
     
 
