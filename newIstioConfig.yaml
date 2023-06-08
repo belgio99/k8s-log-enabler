@@ -1,7 +1,7 @@
 apiVersion: install.istio.io/v1alpha1
 kind: IstioOperator
 metadata:
-  name: istio-minimal-operator
+  name: istio
 spec:
   components:
     base:
@@ -20,19 +20,30 @@ spec:
       enabled: true
   hub: docker.io/istio
   meshConfig:
+    accessLogEncoding: JSON
+    accessLogFile: /dev/stdout
+    accessLogFormat: "{\n  \"start_time\": \"%START_TIME%\",\n  \"method\": \"%REQ(:METHOD)%\"\
+      ,\n  \"protocol\": \"%PROTOCOL%\",\n  \"response_code\": \"%RESPONSE_CODE%\"\
+      ,\n  \"response_code_details\": \"%RESPONSE_CODE_DETAILS%\",\n  \"connection_termination_details\"\
+      : \"%CONNECTION_TERMINATION_DETAILS%\",\n  \"upstream_request_attempt_count\"\
+      : \"%UPSTREAM_REQUEST_ATTEMPT_COUNT%\",\n  \"duration\": \"%DURATION%\",\n \
+      \ \"request_duration\": \"%REQUEST_DURATION%\",\n  \"request_tx_duration\":\
+      \ \"%REQUEST_TX_DURATION%\",\n  \"response_duration\": \"%RESPONSE_DURATION%\"\
+      ,\n  \"response_tx_duration\": \"%RESPONSE_TX_DURATION%\",\n  \"response_flags\"\
+      : \"%RESPONSE_FLAGS%\",\n  \"route_name\": \"%ROUTE_NAME%\",\n  \"authority\"\
+      : \"%REQ(:AUTHORITY)%\",\n  \"connection_id\": \"%CONNECTION_ID%\",\n  \"x-request-id\"\
+      : \"%REQ(X-REQUEST-ID)%\",\n  \"x-envoy-upstream-service-time\": \"%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\"\
+      \n}"
     defaultConfig:
       proxyMetadata: {}
     enablePrometheusMerge: true
-    accessLogFile: /dev/stdout
-    accessLogEncoding: JSON
-    accessLogFormat: "{\n  \"start_time\": \"%START_TIME%\",\n  \"method\": \"%REQ(:METHOD)%\",\n  \"protocol\": \"%PROTOCOL%\",\n  \"response_code\": \"%RESPONSE_CODE%\",\n  \"response_code_details\": \"%RESPONSE_CODE_DETAILS%\",\n  \"connection_termination_details\": \"%CONNECTION_TERMINATION_DETAILS%\",\n  \"upstream_request_attempt_count\": \"%UPSTREAM_REQUEST_ATTEMPT_COUNT%\",\n  \"duration\": \"%DURATION%\",\n  \"request_duration\": \"%REQUEST_DURATION%\",\n  \"request_tx_duration\": \"%REQUEST_TX_DURATION%\",\n  \"response_duration\": \"%RESPONSE_DURATION%\",\n  \"response_tx_duration\": \"%RESPONSE_TX_DURATION%\",\n  \"response_flags\": \"%RESPONSE_FLAGS%\",\n  \"route_name\": \"%ROUTE_NAME%\",\n  \"authority\": \"%REQ(:AUTHORITY)%\",\n  \"connection_id\": \"%CONNECTION_ID%\",\n  \"x-request-id\": \"%REQ(X-REQUEST-ID)%\",\n  \"x-envoy-upstream-service-time\": \"%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\"\n}"
-  profile: minimal
+  profile: default
   tag: 1.17.2
   values:
     base:
       enableCRDTemplates: false
-      validationURL: ""
-    defaultRevision: ""
+      validationURL: ''
+    defaultRevision: ''
     gateways:
       istio-egressgateway:
         autoscaleEnabled: true
@@ -66,7 +77,7 @@ spec:
       defaultResources:
         requests:
           cpu: 10m
-      imagePullPolicy: ""
+      imagePullPolicy: ''
       imagePullSecrets: []
       istioNamespace: istio-system
       istiod:
@@ -78,22 +89,22 @@ spec:
       meshNetworks: {}
       mountMtlsCerts: false
       multiCluster:
-        clusterName: ""
+        clusterName: ''
         enabled: false
-      network: ""
+      network: ''
       omitSidecarInjectorConfigMap: false
       oneNamespace: false
       operatorManageWebhooks: false
       pilotCertProvider: istiod
-      priorityClassName: ""
+      priorityClassName: ''
       proxy:
         autoInject: enabled
         clusterDomain: cluster.local
         componentLogLevel: misc:error
         enableCoreDump: false
-        excludeIPRanges: ""
-        excludeInboundPorts: ""
-        excludeOutboundPorts: ""
+        excludeIPRanges: ''
+        excludeInboundPorts: ''
+        excludeOutboundPorts: ''
         image: proxyv2
         includeIPRanges: '*'
         logLevel: warning
@@ -131,9 +142,9 @@ spec:
         zipkin: {}
       useMCP: false
     istiodRemote:
-      injectionURL: ""
+      injectionURL: ''
     pilot:
-      autoscaleEnabled: false
+      autoscaleEnabled: true
       autoscaleMax: 5
       autoscaleMin: 1
       configMap: true
@@ -149,4 +160,17 @@ spec:
       replicaCount: 1
       traceSampling: 1
     telemetry:
-      enabled: false
+      enabled: true
+      v2:
+        enabled: true
+        metadataExchange:
+          wasmEnabled: false
+        prometheus:
+          enabled: true
+          wasmEnabled: false
+        stackdriver:
+          configOverride: {}
+          enabled: false
+          logging: false
+          monitoring: false
+          topology: false
