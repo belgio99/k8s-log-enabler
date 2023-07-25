@@ -10,7 +10,7 @@ def import_yaml(input_file):
 
 def parse_options():
     parser = argparse.ArgumentParser(description='PROGETTO')
-    parser.add_argument('--inject', action='store_true', help='Injects the input file with the log analysis components')
+    parser.add_argument('-i', '--inject', action='store_true', help='Injects the input file with the log analysis components')
     #parser.add_argument('--analyzeLogs', action='store_true', help='Analyze the logs and creates yRCA compatible log file')
     parser.add_argument('-n', '--namespace', help='If you want to force a custom injection namespace, enter its name here. Otherwise, it will be auto parsed from the input file. You can specify multiple namespaces by separating them with a comma (e.g. "namespace1,namespace2")')
     parser.add_argument('-o', '--output', help='Specify a custom output file pathname. If not specified, the output file will be named "output.yaml"')
@@ -83,7 +83,7 @@ def inject(yamlFile,input_namespaces, outputFile='output.yaml'):
 def main():
     args = parse_options()
     if args.inject:
-        inject(args.input_file, args.namespace)
+        inject(args.input_file, args.namespace, args.output)
 
 
 if __name__ == "__main__":

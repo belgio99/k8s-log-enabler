@@ -1,6 +1,8 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: default
+  name: yrca-deployment
   labels:
     istio-injection: enabled
+    usergroup: yrca
+    istio.io/rev: yrca
