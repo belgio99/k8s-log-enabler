@@ -7247,7 +7247,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 ---
@@ -7281,7 +7281,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -7325,7 +7325,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -7369,7 +7369,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-istio-system
   labels:
     app: istiod
     release: istio
@@ -7476,7 +7476,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-istio-system
   labels:
     app: istiod
     release: istio
@@ -7494,7 +7494,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   labels:
     app: istiod
     release: istio
@@ -7601,14 +7601,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
@@ -7617,14 +7617,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
@@ -7633,14 +7633,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod
@@ -7649,14 +7649,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-istio-system
 subjects:
 - kind: ServiceAccount
   name: istiod
@@ -7665,14 +7665,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
@@ -7681,12 +7681,12 @@ subjects:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: istio-validator-yrca-istio-system
+  name: istio-validator-istio-system
   labels:
     app: istiod
     release: istio
     istio: istiod
-    istio.io/rev: default
+    istio.io/rev: yrca
 webhooks:
   # Webhook handling per-revision validation. Mostly here so we can determine whether webhooks
   # are rejecting invalid configs on a per-revision basis.
@@ -7729,7 +7729,7 @@ metadata:
   name: stats-filter-1.13
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -7844,7 +7844,7 @@ metadata:
   name: stats-filter-1.14
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -7959,7 +7959,7 @@ metadata:
   name: stats-filter-1.15
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8074,7 +8074,7 @@ metadata:
   name: stats-filter-1.16
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8189,7 +8189,7 @@ metadata:
   name: stats-filter-1.17
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8264,7 +8264,7 @@ metadata:
   name: tcp-stats-filter-1.13
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8371,7 +8371,7 @@ metadata:
   name: tcp-stats-filter-1.14
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8478,7 +8478,7 @@ metadata:
   name: tcp-stats-filter-1.15
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8585,7 +8585,7 @@ metadata:
   name: tcp-stats-filter-1.16
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8692,7 +8692,7 @@ metadata:
   name: tcp-stats-filter-1.17
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8757,7 +8757,7 @@ metadata:
   name: istio
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     release: istio
@@ -8805,7 +8805,7 @@ metadata:
   name: istio-sidecar-injector
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     release: istio
@@ -10104,7 +10104,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: istio-sidecar-injector
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     app: sidecar-injector
@@ -10236,7 +10236,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10258,7 +10258,7 @@ spec:
         chart: gateways
         service.istio.io/canonical-name: istio-ingressgateway
         service.istio.io/canonical-revision: latest
-        istio.io/rev: default
+        istio.io/rev: yrca
         install.operator.istio.io/owning-resource: unknown
         operator.istio.io/component: "IngressGateways"
         sidecar.istio.io/inject: "false"
@@ -10451,7 +10451,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     app: istiod
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     istio: pilot
@@ -10468,7 +10468,7 @@ spec:
     metadata:
       labels:
         app: istiod
-        istio.io/rev: default
+        istio.io/rev: yrca
         install.operator.istio.io/owning-resource: unknown
         sidecar.istio.io/inject: "false"
         operator.istio.io/component: "Pilot"
@@ -10615,7 +10615,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10632,7 +10632,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     app: istiod
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     release: istio
@@ -10651,7 +10651,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 rules:
@@ -10684,7 +10684,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   namespace: yrca-istio-system
   labels:
     app: istiod
@@ -10706,7 +10706,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 roleRef:
@@ -10737,7 +10737,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   namespace: yrca-istio-system
   labels:
     app: istiod
@@ -10745,7 +10745,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
@@ -10760,7 +10760,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10786,7 +10786,7 @@ metadata:
   labels:
     app: istiod
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
 spec:
@@ -10814,7 +10814,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10845,7 +10845,7 @@ metadata:
   name: istiod
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     app: istiod

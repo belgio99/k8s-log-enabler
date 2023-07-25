@@ -7247,7 +7247,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 ---
@@ -7281,7 +7281,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -7325,7 +7325,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -7369,7 +7369,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-istio-system
   labels:
     app: istiod
     release: istio
@@ -7476,7 +7476,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-istio-system
   labels:
     app: istiod
     release: istio
@@ -7494,7 +7494,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   labels:
     app: istiod
     release: istio
@@ -7601,14 +7601,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
@@ -7617,14 +7617,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
@@ -7633,14 +7633,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod
@@ -7649,14 +7649,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-istio-system
 subjects:
 - kind: ServiceAccount
   name: istiod
@@ -7665,14 +7665,14 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
@@ -7681,12 +7681,12 @@ subjects:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: istio-validator-yrca-istio-system
+  name: istio-validator-istio-system
   labels:
     app: istiod
     release: istio
     istio: istiod
-    istio.io/rev: default
+    istio.io/rev: yrca
 webhooks:
   # Webhook handling per-revision validation. Mostly here so we can determine whether webhooks
   # are rejecting invalid configs on a per-revision basis.
@@ -7729,7 +7729,7 @@ metadata:
   name: stats-filter-1.13
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -7844,7 +7844,7 @@ metadata:
   name: stats-filter-1.14
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -7959,7 +7959,7 @@ metadata:
   name: stats-filter-1.15
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8074,7 +8074,7 @@ metadata:
   name: stats-filter-1.16
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8189,7 +8189,7 @@ metadata:
   name: stats-filter-1.17
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8264,7 +8264,7 @@ metadata:
   name: tcp-stats-filter-1.13
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8371,7 +8371,7 @@ metadata:
   name: tcp-stats-filter-1.14
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8478,7 +8478,7 @@ metadata:
   name: tcp-stats-filter-1.15
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8585,7 +8585,7 @@ metadata:
   name: tcp-stats-filter-1.16
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8692,7 +8692,7 @@ metadata:
   name: tcp-stats-filter-1.17
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
 spec:
   priority: -1
   configPatches:
@@ -8757,7 +8757,7 @@ metadata:
   name: istio
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     release: istio
@@ -8805,7 +8805,7 @@ metadata:
   name: istio-sidecar-injector
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     release: istio
@@ -10104,7 +10104,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: istio-sidecar-injector
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     app: sidecar-injector
@@ -10236,7 +10236,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10258,7 +10258,7 @@ spec:
         chart: gateways
         service.istio.io/canonical-name: istio-ingressgateway
         service.istio.io/canonical-revision: latest
-        istio.io/rev: default
+        istio.io/rev: yrca
         install.operator.istio.io/owning-resource: unknown
         operator.istio.io/component: "IngressGateways"
         sidecar.istio.io/inject: "false"
@@ -10451,7 +10451,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     app: istiod
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     istio: pilot
@@ -10468,7 +10468,7 @@ spec:
     metadata:
       labels:
         app: istiod
-        istio.io/rev: default
+        istio.io/rev: yrca
         install.operator.istio.io/owning-resource: unknown
         sidecar.istio.io/inject: "false"
         operator.istio.io/component: "Pilot"
@@ -10615,7 +10615,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10632,7 +10632,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     app: istiod
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     release: istio
@@ -10651,7 +10651,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 rules:
@@ -10684,7 +10684,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   namespace: yrca-istio-system
   labels:
     app: istiod
@@ -10706,7 +10706,7 @@ metadata:
   namespace: yrca-istio-system
   labels:
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 roleRef:
@@ -10737,7 +10737,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
   namespace: yrca-istio-system
   labels:
     app: istiod
@@ -10745,7 +10745,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: istiod-yrca-istio-system
+  name: istiod-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
@@ -10760,7 +10760,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10786,7 +10786,7 @@ metadata:
   labels:
     app: istiod
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
 spec:
@@ -10814,7 +10814,7 @@ metadata:
     app: istio-ingressgateway
     istio: ingressgateway
     release: istio
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "IngressGateways"
 spec:
@@ -10845,7 +10845,7 @@ metadata:
   name: istiod
   namespace: yrca-istio-system
   labels:
-    istio.io/rev: default
+    istio.io/rev: yrca
     install.operator.istio.io/owning-resource: unknown
     operator.istio.io/component: "Pilot"
     app: istiod
@@ -10873,359 +10873,44 @@ spec:
     istio: pilot
 ---
 ---
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    istio-injection: enabled
-    istio.io/rev: yrca
-    usergroup: yrca
-  name: default
+{'apiVersion': 'v1', 'kind': 'Namespace', 'metadata': {'name': 'yrca-deployment', 'labels': {'istio-injection': 'enabled', 'usergroup': 'yrca', 'istio.io/rev': 'yrca'}}}
 ---
-# Copyright Istio Authors
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-1
+  namespace: yrca-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-2
+  template:
+    metadata:
+      labels:
+        app: nginx-2
+    spec:
+      containers:
+      - image: nginxdemos/hello:latest
+        name: nginx
+        ports:
+        - containerPort: 80
 
-##################################################################################################
-# This file defines the services, service accounts, and deployments for the Bookinfo sample.
-#
-# To apply all 4 Bookinfo services, their corresponding service accounts, and deployments:
-#
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
-#
-# Alternatively, you can deploy any resource separately:
-#
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l service=reviews # reviews Service
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l account=reviews # reviews ServiceAccount
-#   kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml -l app=reviews,version=v3 # reviews-v3 Deployment
-##################################################################################################
+---
 
-##################################################################################################
-# Details service
-##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
-  name: details
-  labels:
-    app: details
-    service: details
+  name: nginx
+  namespace: yrca-deployment
 spec:
   ports:
-  - port: 9080
-    name: http
+  - port: 8080
+    protocol: TCP
+    targetPort: 80
   selector:
-    app: details
+    app: nginx-2
+  type: LoadBalancer
+
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: bookinfo-details
-  labels:
-    account: details
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: details-v1
-  labels:
-    app: details
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: details
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: details
-        version: v1
-    spec:
-      serviceAccountName: bookinfo-details
-      containers:
-      - name: details
-        image: docker.io/istio/examples-bookinfo-details-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 9080
-        securityContext:
-          runAsUser: 1000
----
-##################################################################################################
-# Ratings service
-##################################################################################################
-apiVersion: v1
-kind: Service
-metadata:
-  name: ratings
-  labels:
-    app: ratings
-    service: ratings
-spec:
-  ports:
-  - port: 9080
-    name: http
-  selector:
-    app: ratings
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: bookinfo-ratings
-  labels:
-    account: ratings
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ratings-v1
-  labels:
-    app: ratings
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ratings
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: ratings
-        version: v1
-    spec:
-      serviceAccountName: bookinfo-ratings
-      containers:
-      - name: ratings
-        image: docker.io/istio/examples-bookinfo-ratings-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 9080
-        securityContext:
-          runAsUser: 1000
----
-##################################################################################################
-# Reviews service
-##################################################################################################
-apiVersion: v1
-kind: Service
-metadata:
-  name: reviews
-  labels:
-    app: reviews
-    service: reviews
-spec:
-  ports:
-  - port: 9080
-    name: http
-  selector:
-    app: reviews
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: bookinfo-reviews
-  labels:
-    account: reviews
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: reviews-v1
-  labels:
-    app: reviews
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: reviews
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: reviews
-        version: v1
-    spec:
-      serviceAccountName: bookinfo-reviews
-      containers:
-      - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: LOG_DIR
-          value: "/tmp/logs"
-        ports:
-        - containerPort: 9080
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: wlp-output
-          mountPath: /opt/ibm/wlp/output
-        securityContext:
-          runAsUser: 1000
-      volumes:
-      - name: wlp-output
-        emptyDir: {}
-      - name: tmp
-        emptyDir: {}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: reviews-v2
-  labels:
-    app: reviews
-    version: v2
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: reviews
-      version: v2
-  template:
-    metadata:
-      labels:
-        app: reviews
-        version: v2
-    spec:
-      serviceAccountName: bookinfo-reviews
-      containers:
-      - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v2:1.17.0
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: LOG_DIR
-          value: "/tmp/logs"
-        ports:
-        - containerPort: 9080
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: wlp-output
-          mountPath: /opt/ibm/wlp/output
-        securityContext:
-          runAsUser: 1000
-      volumes:
-      - name: wlp-output
-        emptyDir: {}
-      - name: tmp
-        emptyDir: {}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: reviews-v3
-  labels:
-    app: reviews
-    version: v3
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: reviews
-      version: v3
-  template:
-    metadata:
-      labels:
-        app: reviews
-        version: v3
-    spec:
-      serviceAccountName: bookinfo-reviews
-      containers:
-      - name: reviews
-        image: docker.io/istio/examples-bookinfo-reviews-v3:1.17.0
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: LOG_DIR
-          value: "/tmp/logs"
-        ports:
-        - containerPort: 9080
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: wlp-output
-          mountPath: /opt/ibm/wlp/output
-        securityContext:
-          runAsUser: 1000
-      volumes:
-      - name: wlp-output
-        emptyDir: {}
-      - name: tmp
-        emptyDir: {}
----
-##################################################################################################
-# Productpage services
-##################################################################################################
-apiVersion: v1
-kind: Service
-metadata:
-  name: productpage
-  labels:
-    app: productpage
-    service: productpage
-spec:
-  ports:
-  - port: 9080
-    name: http
-  selector:
-    app: productpage
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: bookinfo-productpage
-  labels:
-    account: productpage
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: productpage-v1
-  labels:
-    app: productpage
-    version: v1
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: productpage
-      version: v1
-  template:
-    metadata:
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "9080"
-        prometheus.io/path: "/metrics"
-      labels:
-        app: productpage
-        version: v1
-    spec:
-      serviceAccountName: bookinfo-productpage
-      containers:
-      - name: productpage
-        image: docker.io/istio/examples-bookinfo-productpage-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 9080
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        securityContext:
-          runAsUser: 1000
-      volumes:
-      - name: tmp
-        emptyDir: {}
----
+

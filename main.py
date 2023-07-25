@@ -30,12 +30,17 @@ def auto_parse_namespace(yaml_input_file):
     return namespaces
 
 
-def inject(yamlFile,input_namespaces, outputFile='output.yaml'):
+def inject(yamlFile,input_namespaces, outputFile):
     input_file = open(yamlFile, 'r')
-    if not input_namespaces:
-        namespaces = auto_parse_namespace(input_file)
-    else:
-        namespaces = input_namespaces.split(',')
+  # if not input_namespaces:
+  #     namespaces = auto_parse_namespace(input_file)
+  # else:
+  #     namespaces = input_namespaces.split(',')
+    namespaces = []
+    if not outputFile:
+        outputFile = 'output.yaml'
+
+    
         
     
     try:
@@ -49,15 +54,9 @@ def inject(yamlFile,input_namespaces, outputFile='output.yaml'):
         sys.exit(1)
 
     if not namespaces:
-        print('No explicit namespaces found or specified. Will inject the default namespace')
-        namespaces = ['default']
+        print('No explicit namespaces found or specified. Will use the \'yrca\' namespace')
+        namespaces = ['yrca-deployment']
     
-    namespace_text = ''
-    for namespace in namespaces:
-        new_namespace = namespace_template.copy()
-        new_namespace['metadata']['name'] = namespace
-        namespace_text += f"\n---\n{yaml.dump(new_namespace, default_flow_style=False)}"
-
 
 
 
@@ -65,11 +64,19 @@ def inject(yamlFile,input_namespaces, outputFile='output.yaml'):
     istio_text = istio_file.read()
     istio_file.close()
 
-    input_file.seek(0)
-    input_text = input_file.read()
-    input_file.close()
+    merged_text = f"{istio_text}\n---\n{namespace_template}\n---\n"
 
-    merged_text = f"{istio_text}{namespace_text}---\n{input_text}"
+    for yaml_section in yaml.safe_load_all(input_file):
+        if yaml_section is not None:
+            if 'metadata' in yaml_section and 'namespace' in yaml_section['metadata']:
+                yaml_section['metadata']['namespace'] = "yrca-deployment"
+            elif 'metadata' in yaml_section:
+                yaml_section['metadata']['namespace'] = "yrca-deployment"
+            else:
+                yaml_section['metadata'] = {'namespace': "yrca-deployment"}
+            merged_text += yaml.dump(yaml_section, default_flow_style=False)
+            merged_text += '\n---\n\n'
+
 
     with open(outputFile, 'w') as stream:
         try:

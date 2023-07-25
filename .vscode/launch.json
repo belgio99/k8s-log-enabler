@@ -11,7 +11,7 @@
          "program": "${file}",
          "console": "integratedTerminal",
          "justMyCode": true,
-         "args": ["--inject", "test_deployment_1.yaml"]
+         "args": ["--inject", "test_deployment_2.yaml"]
       }
    ]
 }
