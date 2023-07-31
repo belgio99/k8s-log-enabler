@@ -3,6 +3,7 @@ kind: Namespace
 metadata:
   name: yrca-deployment
   labels:
-    istio-injection: enabled
+    istio-injection: disabled
     usergroup: yrca
     istio.io/rev: yrca
+    yrca-istio-injection: enabled

@@ -9618,9 +9618,9 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: istio.io/rev
+    - key: yrca-istio.io/rev
       operator: DoesNotExist
-    - key: istio-injection
+    - key: yrca-istio-injection
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
