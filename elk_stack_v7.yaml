@@ -189,7 +189,9 @@ spec:
                 fieldRef:
                  fieldPath: spec.nodeName
             - name: ELASTICSEARCH_HOSTS
-              value: "elasticsearch:9200"
+              value: "logstash"
+            - name: ELASTICSEARCH_PORT
+              value: "5044"
             - name: ELASTICSEARCH_USERNAME
               value: "elastic"
             - name: ELASTICSEARCH_PASSWORD
