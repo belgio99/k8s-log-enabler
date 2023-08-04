@@ -44,7 +44,7 @@ def inject(yamlFile,input_namespaces, outputFile):
         
     
     try:
-        namespace_template = import_yaml('namespace_template.yaml')
+        namespace_template = import_yaml('manifest/namespace_manifest.yaml')
     except Exception as exc:
         print(exc)
         sys.exit(1)
@@ -60,11 +60,15 @@ def inject(yamlFile,input_namespaces, outputFile):
 
 
 
-    istio_file = open('istio_manifest.yaml', 'r')
+    istio_file = open('manifest/istio_manifest.yaml', 'r')
     istio_text = istio_file.read()
     istio_file.close()
 
-    merged_text = f"{istio_text}\n---\n{namespace_template}\n---\n"
+    elk_file = open('manifest/elk_manifest.yaml', 'r')
+    elk_text = elk_file.read()
+    elk_file.close()
+
+    merged_text = f"{istio_text}\n---\n{elk_text}\n---\n{namespace_template}\n---\n"
 
     for yaml_section in yaml.safe_load_all(input_file):
         if yaml_section is not None:
