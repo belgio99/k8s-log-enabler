@@ -4,3 +4,9 @@ yRCA/
 __pycache__/
 
 yRCA2/
+
+output.yaml
+
+input/
+
+output/
