@@ -1,101 +1,135 @@
-import yaml, sys, argparse
+"""
+Tool for transforming a standard Kubernetes manifest file into a yRCA compatible one.
+It does so by injecting the log analysis components into the input file.
+"""
+
+import argparse
+import yaml
+
+YRCA_NAMESPACE = "yrca-deployment"
 
 def import_yaml(input_file):
-    with open(input_file, 'r') as stream:
+    """
+    Import a YAML file and return its content as a dictionary.
+    """
+    with open(input_file, 'r', encoding='utf-8') as stream:
         try:
             return yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-
+            return None
 
 def parse_options():
+    """
+    Parse command line options.
+    """
     parser = argparse.ArgumentParser(description='PROGETTO')
-    parser.add_argument('-i', '--inject', action='store_true', help='Injects the input file with the log analysis components')
-    #parser.add_argument('--analyzeLogs', action='store_true', help='Analyze the logs and creates yRCA compatible log file')
-    parser.add_argument('-n', '--namespace', help='If you want to force a custom injection namespace, enter its name here. Otherwise, it will be auto parsed from the input file. You can specify multiple namespaces by separating them with a comma (e.g. "namespace1,namespace2")')
-    parser.add_argument('-o', '--output', help='Specify a custom output file pathname. If not specified, the output file will be named "output.yaml"')
-    parser.add_argument('input_file', metavar='input_file', help='The input file to be processed')
+    parser.add_argument('-i', '--inject', action='store_true',
+                        help='Inject log analysis components into the input file')
+    parser.add_argument('-o', '--output', default='output.yaml',
+                        help='Specify a custom output file pathname. Defaults to "output.yaml"')
+    parser.add_argument('-t', '--timeout', default='1m',
+                        help='Specify a custom Envoy timeout. Defaults to 1m')
+    parser.add_argument('input_file', metavar='input_file', help='Input file to be processed')
     return parser.parse_args()
 
+def load_manifests(filenames):
+    """
+    Load multiple manifest contents from a list of files.
+    """
+    return {filename: load_manifest(filename) for filename in filenames}
 
-def auto_parse_namespace(yaml_input_file):
-    namespaces = []
-    for yaml_input in yaml.safe_load_all(yaml_input_file):
-        try:
-            namespace = yaml_input['metadata']['namespace']
-            print(f'Auto parsed namespace: {namespace}')
-            namespaces.append(namespace)
-        except Exception as exc:
-            continue
-    return namespaces
+def load_manifest(filename):
+    """
+    Load manifest content from a file.
+    """
+    with open(filename, 'r', encoding='utf-8') as file:
+        return file.read()
 
+def build_merged_text(manifests):
+    """
+    Build merged text from list of manifest texts.
+    """
+    return '\n---\n'.join(manifests) + '\n---\n'
 
-def inject(yamlFile,input_namespaces, outputFile):
-    input_file = open(yamlFile, 'r')
-  # if not input_namespaces:
-  #     namespaces = auto_parse_namespace(input_file)
-  # else:
-  #     namespaces = input_namespaces.split(',')
-    namespaces = []
-    if not outputFile:
-        outputFile = 'output.yaml'
-
-    
-        
-    
+def inject(yaml_file, timeout="1m", output_file="output.yaml"):
+    """
+    Inject log analysis components into a YAML file.
+    """
     try:
-        namespace_template = import_yaml('manifest/namespace_manifest.yaml')
-    except Exception as exc:
-        print(exc)
-        sys.exit(1)
-    
-    if not namespace_template:
-        print('Error while parsing the namespace template file')
-        sys.exit(1)
+        manifests = load_manifests([
+            yaml_file,
+            'manifest/namespace_manifest.yaml',
+            'manifest/istio_manifest.yaml',
+            'manifest/elk_manifest.yaml'
+        ])
 
-    if not namespaces:
-        print('No explicit namespaces found or specified. Will use the \'yrca\' namespace')
-        namespaces = ['yrca-deployment']
-    
+        virtual_services = []
+        docs_text = []
 
+        for doc in yaml.safe_load_all(manifests[yaml_file]):
+            if doc:
+                doc = replace_namespace(doc)
+                if doc["kind"].lower() == "service":
+                    service_name = doc["metadata"]["name"]
+                    virtual_service = create_virtual_service(service_name, timeout)
+                    virtual_services.append(virtual_service)
+                docs_text.append(yaml.dump(doc, default_flow_style=False))
 
+        virtual_services_text = [yaml.dump(vs, default_flow_style=False) for vs in virtual_services]
+        merged_text = build_merged_text([
+            manifests['manifest/istio_manifest.yaml'],
+            manifests['manifest/elk_manifest.yaml'],
+            manifests['manifest/namespace_manifest.yaml']
+        ] + docs_text + virtual_services_text)
 
-    istio_file = open('manifest/istio_manifest.yaml', 'r')
-    istio_text = istio_file.read()
-    istio_file.close()
-
-    elk_file = open('manifest/elk_manifest.yaml', 'r')
-    elk_text = elk_file.read()
-    elk_file.close()
-
-    merged_text = f"{istio_text}\n---\n{elk_text}\n---\n{namespace_template}\n---\n"
-
-    for yaml_section in yaml.safe_load_all(input_file):
-        if yaml_section is not None:
-            if 'metadata' in yaml_section and 'namespace' in yaml_section['metadata']:
-                yaml_section['metadata']['namespace'] = "yrca-deployment"
-            elif 'metadata' in yaml_section:
-                yaml_section['metadata']['namespace'] = "yrca-deployment"
-            else:
-                yaml_section['metadata'] = {'namespace': "yrca-deployment"}
-            merged_text += yaml.dump(yaml_section, default_flow_style=False)
-            merged_text += '\n---\n\n'
-
-
-    with open(outputFile, 'w') as stream:
-        try:
+        with open(output_file, 'w', encoding='utf-8') as stream:
             stream.write(merged_text)
-            print(f'Output file written to {outputFile}')
-        except Exception as exc:
-            print(exc)
+            print(f'Output file written to {output_file}')
 
+    except FileNotFoundError as exc:
+        print(exc)
 
+def replace_namespace(yaml_section):
+    """
+    Replace or set the namespace in the YAML section.
+    """
+    if 'metadata' not in yaml_section:
+        yaml_section['metadata'] = {}
+    yaml_section['metadata']['namespace'] = YRCA_NAMESPACE
+    return yaml_section
+
+def create_virtual_service(service_name, timeout):
+    """
+    Create an Istio VirtualService configuration for a given service.
+    """
+    return {
+        "apiVersion": "networking.istio.io/v1alpha3",
+        "kind": "VirtualService",
+        "metadata": {
+            "name": service_name,
+            "namespace": YRCA_NAMESPACE
+        },
+        "spec": {
+            "hosts": [service_name],
+            "http": [{
+                "route": [{
+                    "destination": {
+                        "host": service_name
+                    }
+                }],
+                "timeout": timeout
+            }]
+        }
+    }
 
 def main():
+    """
+    Main function to execute script.
+    """
     args = parse_options()
     if args.inject:
-        inject(args.input_file, args.namespace, args.output)
-
+        inject(args.input_file, args.timeout, args.output)
 
 if __name__ == "__main__":
     main()

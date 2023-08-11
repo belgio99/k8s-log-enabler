@@ -306,6 +306,6 @@ data:
           - logs_path:
               logs_path: "/var/log/containers/"
       - drop_event.when.not.or:
-        - equals.kubernetes.namespace: "yrca-deployment"
+        - contains.kubernetes.namespace: "yrca-deployment"
     output.logstash:
       hosts: ['${LOGSTASH_HOSTS}']
