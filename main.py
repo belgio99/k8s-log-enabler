@@ -1,81 +1,114 @@
-import yaml, sys, argparse
+"""
+Tool for transforming a standard Kubernetes manifest file into a yRCA compatible one.
+It does so by injecting the log analysis components into the input file.
+"""
 
-yrca_namespace = "yrca-deployment"
+import argparse
+import yaml
 
-def main():
-    args = parse_options()
-    if args.inject:
-        inject(args.input_file, args.timeout, args.output)
+YRCA_NAMESPACE = "yrca-deployment"
+
+def import_yaml(input_file):
+    """
+    Import a YAML file and return its content as a dictionary.
+    """
+    with open(input_file, 'r', encoding='utf-8') as stream:
+        try:
+            return yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+            return None
 
 def parse_options():
+    """
+    Parse command line options.
+    """
     parser = argparse.ArgumentParser(description='PROGETTO')
-    parser.add_argument('-i', '--inject', action='store_true', help='Injects the input file with the log analysis components')
-    #parser.add_argument('--analyzeLogs', action='store_true', help='Analyze the logs and creates yRCA compatible log file')
-    parser.add_argument('-o', '--output', default='output.yaml', help='Specify a custom output file pathname. If not specified, the output file will be named "output.yaml"')
-    parser.add_argument('-t', '--timeout', default='1m', help='You can specify a custom Envoy timeout. If not specified, the default value is 1m')
-    parser.add_argument('input_file', metavar='input_file', help='The input file to be processed')
+    parser.add_argument('-i', '--inject', action='store_true',
+                        help='Inject log analysis components into the input file')
+    parser.add_argument('-o', '--output', default='output.yaml',
+                        help='Specify a custom output file pathname. Defaults to "output.yaml"')
+    parser.add_argument('-t', '--timeout', default='1m',
+                        help='Specify a custom Envoy timeout. Defaults to 1m')
+    parser.add_argument('input_file', metavar='input_file', help='Input file to be processed')
     return parser.parse_args()
 
-def inject(yamlFile, timeout="1m", outputFile="output.yaml"):
+def load_manifests(filenames):
+    """
+    Load multiple manifest contents from a list of files.
+    """
+    return {filename: load_manifest(filename) for filename in filenames}
+
+def load_manifest(filename):
+    """
+    Load manifest content from a file.
+    """
+    with open(filename, 'r', encoding='utf-8') as file:
+        return file.read()
+
+def build_merged_text(manifests):
+    """
+    Build merged text from list of manifest texts.
+    """
+    return '\n---\n'.join(manifests) + '\n---\n'
+
+def inject(yaml_file, timeout="1m", output_file="output.yaml"):
+    """
+    Inject log analysis components into a YAML file.
+    """
     try:
-        input_file = open(yamlFile, 'r')
-    except Exception as exc:
-        print(exc)
-        sys.exit(1)
-    
-    namespace_file = open('manifest/namespace_manifest.yaml', 'r')
-    namespace_text = namespace_file.read()
-    namespace_file.close()
+        manifests = load_manifests([
+            yaml_file,
+            'manifest/namespace_manifest.yaml',
+            'manifest/istio_manifest.yaml',
+            'manifest/elk_manifest.yaml'
+        ])
 
-    istio_file = open('manifest/istio_manifest.yaml', 'r')
-    istio_text = istio_file.read()
-    istio_file.close()
+        virtual_services = []
+        docs_text = []
 
-    elk_file = open('manifest/elk_manifest.yaml', 'r')
-    elk_text = elk_file.read()
-    elk_file.close()
+        for doc in yaml.safe_load_all(manifests[yaml_file]):
+            if doc:
+                doc = replace_namespace(doc)
+                if doc["kind"].lower() == "service":
+                    service_name = doc["metadata"]["name"]
+                    virtual_service = create_virtual_service(service_name, timeout)
+                    virtual_services.append(virtual_service)
+                docs_text.append(yaml.dump(doc, default_flow_style=False))
 
-    merged_text = f"{istio_text}\n---\n{elk_text}\n---\n{namespace_text}\n---\n"
+        virtual_services_text = [yaml.dump(vs, default_flow_style=False) for vs in virtual_services]
+        merged_text = build_merged_text([
+            manifests['manifest/istio_manifest.yaml'],
+            manifests['manifest/elk_manifest.yaml'],
+            manifests['manifest/namespace_manifest.yaml']
+        ] + docs_text + virtual_services_text)
 
-    virtual_services = []
-
-    for doc in yaml.safe_load_all(input_file):
-        if doc is not None:
-            doc = replace_namespace(doc)
-            if doc["kind"].lower() == "service":
-                service_name = doc["metadata"]["name"]
-                vs = create_virtual_service(service_name, timeout)
-                virtual_services.append(vs)
-            merged_text += yaml.dump(doc, default_flow_style=False)
-            merged_text += '\n---\n\n'
-
-    for vs in virtual_services:
-        merged_text += yaml.dump(vs, default_flow_style=False)
-        merged_text += '\n---\n\n'
-
-    with open(outputFile, 'w') as stream:
-        try:
+        with open(output_file, 'w', encoding='utf-8') as stream:
             stream.write(merged_text)
-            print(f'Output file written to {outputFile}')
-        except Exception as exc:
-            print(exc)
+            print(f'Output file written to {output_file}')
+
+    except FileNotFoundError as exc:
+        print(exc)
 
 def replace_namespace(yaml_section):
+    """
+    Replace or set the namespace in the YAML section.
+    """
     if 'metadata' not in yaml_section:
         yaml_section['metadata'] = {}
-    yaml_section['metadata']['namespace'] = yrca_namespace
+    yaml_section['metadata']['namespace'] = YRCA_NAMESPACE
     return yaml_section
 
 def create_virtual_service(service_name, timeout):
     """
-    Create an Istio VirtualService configuration for the given service.
+    Create an Istio VirtualService configuration for a given service.
     """
     return {
         "apiVersion": "networking.istio.io/v1alpha3",
         "kind": "VirtualService",
         "metadata": {
             "name": service_name,
-            "namespace": yrca_namespace
+            "namespace": YRCA_NAMESPACE
         },
         "spec": {
             "hosts": [service_name],
@@ -90,6 +123,13 @@ def create_virtual_service(service_name, timeout):
         }
     }
 
+def main():
+    """
+    Main function to execute script.
+    """
+    args = parse_options()
+    if args.inject:
+        inject(args.input_file, args.timeout, args.output)
 
 if __name__ == "__main__":
     main()
