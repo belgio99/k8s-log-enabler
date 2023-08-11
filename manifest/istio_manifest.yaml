@@ -7719,23 +7719,16 @@ data:
     accessLogFormat: |
       {
         "start_time": "%START_TIME%",
-        "method": "%REQ(:METHOD)%",
-        "protocol": "%PROTOCOL%",
         "response_code": "%RESPONSE_CODE%",
+        "response_flags": "%RESPONSE_FLAGS%",
         "response_code_details": "%RESPONSE_CODE_DETAILS%",
-        "connection_termination_details": "%CONNECTION_TERMINATION_DETAILS%",
-        "upstream_request_attempt_count": "%UPSTREAM_REQUEST_ATTEMPT_COUNT%",
         "duration": "%DURATION%",
         "request_duration": "%REQUEST_DURATION%",
         "request_tx_duration": "%REQUEST_TX_DURATION%",
         "response_duration": "%RESPONSE_DURATION%",
         "response_tx_duration": "%RESPONSE_TX_DURATION%",
-        "response_flags": "%RESPONSE_FLAGS%",
-        "route_name": "%ROUTE_NAME%",
         "authority": "%REQ(:AUTHORITY)%",
-        "connection_id": "%CONNECTION_ID%",
         "x-request-id": "%REQ(X-REQUEST-ID)%",
-        "x-envoy-upstream-service-time": "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%"
       }
     defaultConfig:
       discoveryAddress: istiod.yrca-istio-system.svc:15012
