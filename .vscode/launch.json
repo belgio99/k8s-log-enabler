@@ -3,15 +3,39 @@
    // Al passaggio del mouse vengono visualizzate le descrizioni degli attributi esistenti.
    // Per altre informazioni, visitare: https://go.microsoft.com/fwlink/?linkid=830387
    "version": "0.2.0",
-   "configurations": [
-      {
+   "configurations": [{
          "name": "Python: file corrente",
          "type": "python",
          "request": "launch",
          "program": "${file}",
          "console": "integratedTerminal",
          "justMyCode": true,
+         //"args": ["--inject", "test_deployment_2.yaml"]
+         "args": ["-c", "-es", "localhost", "-p", "9200"]
+      },
+      {
+         "name": "Python: Inject 1",
+         "type": "python",
+         "request": "launch",
+         "program": "${workspaceFolder}/main.py",
+         "console": "integratedTerminal",
+         "args": ["--inject", "test_deployment_1.yaml"]
+      },
+      {
+         "name": "Python: Inject 2",
+         "type": "python",
+         "request": "launch",
+         "program": "${workspaceFolder}/main.py",
+         "console": "integratedTerminal",
          "args": ["--inject", "test_deployment_2.yaml"]
+      },
+      {
+         "name": "Python: DB Connection",
+         "type": "python",
+         "request": "launch",
+         "program": "${workspaceFolder}/main.py",
+         "console": "integratedTerminal",
+         "args": ["-c", "-es", "localhost", "-p", "9200"]
       }
    ]
 }
