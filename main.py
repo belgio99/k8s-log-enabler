@@ -157,32 +157,38 @@ def create_virtual_service(service_name, timeout):
 
 def get_istio_logs(es_host="localhost", es_port=9200):
     # Connect to the Elasticsearch instance
-    try:
-        es = Elasticsearch([{"host": es_host, "port": es_port, "scheme": "http"}])
-    except Exception as exc:
-        print(exc)
-        return
+    es = Elasticsearch([{"host": es_host, "port": es_port, "scheme": "http"}])
+    size = 10000
 
     # Define the query
     query = {
+        "size": size,
+        "sort": [{"@timestamp": {"order": "asc"}}],
         "query": {
             "bool": {
                 "must": [
                     {"match": {"kubernetes.namespace.keyword": "yrca-deployment"}},
                     {"match": {"kubernetes.container.name": "istio-proxy"}},
+                    {"regexp": {"full_message": "^\s*\{.*\}\s*$"}}
                 ]
             }
         }
     }
 
     # Execute the query and get the results
-    response = es.search(index="logstash-gelf-*", body=query)
+    try:
+        response = es.search(index="logstash-gelf-*", body=query)
+    except Exception as e:
+        print("Error while connecting to Elasticsearch instance")
+        return
+
 
     # Extract logs from the response
-    logs = [hit["_source"] for hit in response["hits"]["hits"]]
+    logs = [hit["_source"]["message"] for hit in response["hits"]["hits"]]
 
     for log in logs:
-        print(json.dumps(log, indent=4))
+        print(log)
+
 
 
 def main():
