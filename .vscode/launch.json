@@ -35,7 +35,15 @@
          "request": "launch",
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
-         "args": ["-c", "-es", "localhost", "-p", "9200"]
+         "args": ["-c", "-es", "127.0.0.1", "-p", "${input:es_port}"]
+      }
+   ],
+   "inputs": [
+      {
+          "id": "es_port",
+          "type": "promptString",
+          "description": "Enter the Minikube port number",
+          "default": "54100"  // optional default value
       }
    ]
 }
