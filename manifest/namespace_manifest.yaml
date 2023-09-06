@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: yrca-deployment
+  name: log-enabled
   labels:
     istio-injection: disabled
-    usergroup: yrca
-    istio.io/rev: yrca
-    yrca-istio-injection: enabled
+    usergroup: log
+    istio.io/rev: log
+    log-istio-injection: enabled

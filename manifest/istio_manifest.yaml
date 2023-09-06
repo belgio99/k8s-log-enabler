@@ -2,16 +2,16 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: yrca-istio-system
+  name: log-istio-system
   labels:
-    usergroup: yrca
+    usergroup: log
 ---
 
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: istio-reader-service-account
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -29,7 +29,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: istiod-service-account
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -37,7 +37,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-log-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -81,7 +81,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-log-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -125,7 +125,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -220,7 +220,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -238,7 +238,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -345,87 +345,87 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-log-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-log-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-log-istio-system
 subjects:
 - kind: ServiceAccount
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: istio-validator-yrca-istio-system
+  name: istio-validator-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -439,7 +439,7 @@ webhooks:
       # Should change from base but cannot for API compat
       service:
         name: istiod
-        namespace: yrca-istio-system
+        namespace: log-istio-system
         path: "/validate"
     rules:
       - operations:
@@ -471,7 +471,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: istio
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -501,23 +501,23 @@ data:
         "x-request-id": "%REQ(X-REQUEST-ID)%",
       }
     defaultConfig:
-      discoveryAddress: istiod.yrca-istio-system.svc:15012
+      discoveryAddress: istiod.log-istio-system.svc:15012
       proxyMetadata: {}
       tracing:
         zipkin:
-          address: zipkin.yrca-istio-system:9411
+          address: zipkin.log-istio-system:9411
     defaultProviders:
       metrics:
       - prometheus
     enablePrometheusMerge: true
-    rootNamespace: yrca-istio-system
+    rootNamespace: log-istio-system
     trustDomain: cluster.local
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: istio-sidecar-injector
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -548,7 +548,7 @@ data:
         "hub": "docker.io/istio",
         "imagePullPolicy": "",
         "imagePullSecrets": [],
-        "istioNamespace": "yrca-istio-system",
+        "istioNamespace": "log-istio-system",
         "istiod": {
           "enableAnalysis": false
         },
@@ -564,7 +564,7 @@ data:
           "clusterName": "",
           "enabled": false
         },
-        "namespace": "yrca-istio-system",
+        "namespace": "log-istio-system",
         "network": "",
         "omitSidecarInjectorConfigMap": false,
         "oneNamespace": false,
@@ -2349,7 +2349,7 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: istio-sidecar-injector-yrca-istio-system
+  name: istio-sidecar-injector-log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -2357,11 +2357,11 @@ metadata:
     app: sidecar-injector
     release: istio
 webhooks:
-- name: rev.namespace.yrca-sidecar-injector.istio.io
+- name: rev.namespace.sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2374,23 +2374,23 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: In
       values:
       - "default"
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: NotIn
       values:
       - "false"
-- name: rev.object.yrca-sidecar-injector.istio.io
+- name: rev.object.log-sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2403,25 +2403,25 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: yrca-istio.io/rev
+    - key: istio.io/log-rev
       operator: DoesNotExist
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: NotIn
       values:
       - "false"
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: In
       values:
       - "default"
-- name: namespace.yrca-sidecar-injector.istio.io
+- name: namespace.log-sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2434,21 +2434,21 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: In
       values:
       - enabled
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: NotIn
       values:
       - "false"
-- name: object.yrca-sidecar-injector.istio.io
+- name: object.log-sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2461,24 +2461,24 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: DoesNotExist
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: In
       values:
       - "true"
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: DoesNotExist
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     istio.io/rev: default
@@ -2568,7 +2568,7 @@ spec:
           - name: PILOT_ENABLE_PROTOCOL_SNIFFING_FOR_INBOUND
             value: "true"
           - name: ISTIOD_ADDR
-            value: istiod.yrca-istio-system.svc:15012
+            value: istiod.log-istio-system.svc:15012
           - name: PILOT_ENABLE_ANALYSIS
             value: "false"
           - name: CLUSTER_ID
@@ -2645,7 +2645,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     istio.io/rev: default
@@ -2664,7 +2664,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2689,8 +2689,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: istiod-yrca-istio-system
-  namespace: yrca-istio-system
+  name: istiod-log-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2708,7 +2708,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2719,30 +2719,30 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: istiod
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: istiod-yrca-istio-system
-  namespace: yrca-istio-system
+  name: istiod-log-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2768,7 +2768,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
