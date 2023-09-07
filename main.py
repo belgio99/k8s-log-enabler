@@ -170,9 +170,9 @@ def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=Fa
     query = {
         "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace": "log-enabled"}},
+                    {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
                     {"match": {"kubernetes.container.name": "istio-proxy"}},
-                    {"match": {"message": "start_time"}}
+                    {"match": {"full_message": "start_time"}}
                 ]
             }
         }
@@ -185,12 +185,11 @@ def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=Fa
                 }
             }
     try:
-        response = es.search(index="filebeat-*", query=query, size=size, sort="@timestamp:asc")
+        response = es.search(index="logstash-*", query=query, size=size, sort="@timestamp:asc")
     except Exception as e:
         print("Error while connecting to Elasticsearch instance")
         print(e)
         return None
-    
 
     logs = []
     if format == "yrca":

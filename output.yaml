@@ -2903,6 +2903,97 @@ spec:
   ports:
     - protocol: TCP
       port: 9200
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: log-elk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:7.15.0
+        env:
+          - name: ELASTICSEARCH_HOSTS
+            value: "elasticsearch:9200"
+          #- name: LOG_LEVEL
+          #  value: "debug"
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/logstash/pipeline/
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: logstash-config
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: log-elk
+data:
+  logstash.conf: |-
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+      if [message] =~ /{/ {
+        json {
+          source => "message"
+        }
+      }
+      mutate {
+        rename => {
+          "log" => "short_message"
+          "stream" => "host"
+        }
+        add_field => {
+          "version" => "1.1"
+          "full_message" => "%{message}"
+          "level" => "6"
+        }
+      }
+      date {
+        match => [ "time", "ISO8601" ]
+        target => "timestamp"
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => "${ELASTICSEARCH_HOSTS}"
+        index => "logstash-gelf-%{+YYYY.MM.dd}"
+      }
+    }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: log-elk
+spec:
+  selector:
+    app: logstash
+  ports:
+    - protocol: TCP
+      port: 5044
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -2967,8 +3058,8 @@ spec:
         securityContext:
           runAsUser: 0
         env:
-        - name: ELASTICSEARCH_HOSTS
-          value: "elasticsearch:9200"
+        - name: LOGSTASH_HOSTS
+          value: "logstash:5044"
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -3019,8 +3110,8 @@ data:
               logs_path: "/var/log/containers/"
       - drop_event.when.not.or:
         - contains.kubernetes.namespace: "log-enabled"
-    output.elasticsearch:
-      hosts: ['${ELASTICSEARCH_HOSTS}']
+    output.logstash:
+      hosts: ['${LOGSTASH_HOSTS}']
 ---
 apiVersion: v1
 kind: Namespace
@@ -3033,27 +3124,9 @@ metadata:
     log-istio-injection: enabled
 ---
 apiVersion: v1
-kind: Service
+kind: Namespace
 metadata:
-  labels:
-    app: details
-    service: details
-  name: details
-  namespace: log-enabled
-spec:
-  ports:
-  - name: http
-    port: 9080
-  selector:
-    app: details
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    account: details
-  name: bookinfo-details
+  name: sock-shop
   namespace: log-enabled
 
 ---
@@ -3061,377 +3134,1138 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: details
-    version: v1
-  name: details-v1
+    name: carts
+  name: carts
   namespace: log-enabled
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: details
-      version: v1
+      name: carts
   template:
     metadata:
       labels:
-        app: details
-        version: v1
-    spec:
-      containers:
-      - image: docker.io/istio/examples-bookinfo-details-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        name: details
-        ports:
-        - containerPort: 9080
-        securityContext:
-          runAsUser: 1000
-      serviceAccountName: bookinfo-details
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: ratings
-    service: ratings
-  name: ratings
-  namespace: log-enabled
-spec:
-  ports:
-  - name: http
-    port: 9080
-  selector:
-    app: ratings
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    account: ratings
-  name: bookinfo-ratings
-  namespace: log-enabled
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: ratings
-    version: v1
-  name: ratings-v1
-  namespace: log-enabled
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ratings
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: ratings
-        version: v1
-    spec:
-      containers:
-      - image: docker.io/istio/examples-bookinfo-ratings-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        name: ratings
-        ports:
-        - containerPort: 9080
-        securityContext:
-          runAsUser: 1000
-      serviceAccountName: bookinfo-ratings
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: reviews
-    service: reviews
-  name: reviews
-  namespace: log-enabled
-spec:
-  ports:
-  - name: http
-    port: 9080
-  selector:
-    app: reviews
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    account: reviews
-  name: bookinfo-reviews
-  namespace: log-enabled
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: reviews
-    version: v1
-  name: reviews-v1
-  namespace: log-enabled
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: reviews
-      version: v1
-  template:
-    metadata:
-      labels:
-        app: reviews
-        version: v1
+        name: carts
     spec:
       containers:
       - env:
-        - name: LOG_DIR
-          value: /tmp/logs
-        image: docker.io/istio/examples-bookinfo-reviews-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        name: reviews
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/carts:0.4.8
+        name: carts
         ports:
-        - containerPort: 9080
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 300m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
         securityContext:
-          runAsUser: 1000
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
         volumeMounts:
         - mountPath: /tmp
-          name: tmp
-        - mountPath: /opt/ibm/wlp/output
-          name: wlp-output
-      serviceAccountName: bookinfo-reviews
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       volumes:
-      - emptyDir: {}
-        name: wlp-output
-      - emptyDir: {}
-        name: tmp
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: carts
+  name: carts
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: carts
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: reviews
-    version: v2
-  name: reviews-v2
+    name: carts-db
+  name: carts-db
   namespace: log-enabled
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: reviews
-      version: v2
+      name: carts-db
   template:
     metadata:
       labels:
-        app: reviews
-        version: v2
+        name: carts-db
     spec:
       containers:
-      - env:
-        - name: LOG_DIR
-          value: /tmp/logs
-        image: docker.io/istio/examples-bookinfo-reviews-v2:1.17.0
-        imagePullPolicy: IfNotPresent
-        name: reviews
+      - image: mongo
+        name: carts-db
         ports:
-        - containerPort: 9080
+        - containerPort: 27017
+          name: mongo
         securityContext:
-          runAsUser: 1000
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
         volumeMounts:
         - mountPath: /tmp
-          name: tmp
-        - mountPath: /opt/ibm/wlp/output
-          name: wlp-output
-      serviceAccountName: bookinfo-reviews
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       volumes:
-      - emptyDir: {}
-        name: wlp-output
-      - emptyDir: {}
-        name: tmp
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: reviews
-    version: v3
-  name: reviews-v3
-  namespace: log-enabled
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: reviews
-      version: v3
-  template:
-    metadata:
-      labels:
-        app: reviews
-        version: v3
-    spec:
-      containers:
-      - env:
-        - name: LOG_DIR
-          value: /tmp/logs
-        image: docker.io/istio/examples-bookinfo-reviews-v3:1.17.0
-        imagePullPolicy: IfNotPresent
-        name: reviews
-        ports:
-        - containerPort: 9080
-        securityContext:
-          runAsUser: 1000
-        volumeMounts:
-        - mountPath: /tmp
-          name: tmp
-        - mountPath: /opt/ibm/wlp/output
-          name: wlp-output
-      serviceAccountName: bookinfo-reviews
-      volumes:
-      - emptyDir: {}
-        name: wlp-output
-      - emptyDir: {}
-        name: tmp
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: productpage
-    service: productpage
-  name: productpage
+    name: carts-db
+  name: carts-db
   namespace: log-enabled
 spec:
   ports:
-  - name: http
-    port: 9080
+  - port: 27017
+    targetPort: 27017
   selector:
-    app: productpage
-
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    account: productpage
-  name: bookinfo-productpage
-  namespace: log-enabled
+    name: carts-db
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: productpage
-    version: v1
-  name: productpage-v1
+    name: catalogue
+  name: catalogue
   namespace: log-enabled
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: productpage
-      version: v1
+      name: catalogue
+  template:
+    metadata:
+      labels:
+        name: catalogue
+    spec:
+      containers:
+      - args:
+        - -port=80
+        command:
+        - /app
+        image: weaveworksdemos/catalogue:0.3.5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: catalogue
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: catalogue
+  name: catalogue
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: catalogue
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: catalogue-db
+  name: catalogue-db
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: catalogue-db
+  template:
+    metadata:
+      labels:
+        name: catalogue-db
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: fake_password
+        - name: MYSQL_DATABASE
+          value: socksdb
+        image: weaveworksdemos/catalogue-db:0.3.0
+        name: catalogue-db
+        ports:
+        - containerPort: 3306
+          name: mysql
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: catalogue-db
+  name: catalogue-db
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    name: catalogue-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-end
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: front-end
+  template:
+    metadata:
+      labels:
+        name: front-end
+    spec:
+      containers:
+      - env:
+        - name: SESSION_REDIS
+          value: 'true'
+        image: weaveworksdemos/front-end:0.3.12
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8079
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: front-end
+        ports:
+        - containerPort: 8079
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8079
+          initialDelaySeconds: 30
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 300m
+            memory: 1000Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+        securityContext:
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: front-end
+  name: front-end
+  namespace: log-enabled
+spec:
+  ports:
+  - nodePort: 30001
+    port: 80
+    targetPort: 8079
+  selector:
+    name: front-end
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: orders
+  name: orders
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: orders
+  template:
+    metadata:
+      labels:
+        name: orders
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/orders:0.4.7
+        name: orders
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: orders
+  name: orders
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: orders
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: orders-db
+  name: orders-db
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: orders-db
+  template:
+    metadata:
+      labels:
+        name: orders-db
+    spec:
+      containers:
+      - image: mongo
+        name: orders-db
+        ports:
+        - containerPort: 27017
+          name: mongo
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: orders-db
+  name: orders-db
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    name: orders-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: payment
+  name: payment
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: payment
+  template:
+    metadata:
+      labels:
+        name: payment
+    spec:
+      containers:
+      - image: weaveworksdemos/payment:0.4.3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: payment
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 99m
+            memory: 100Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: payment
+  name: payment
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: payment
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: queue-master
+  name: queue-master
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: queue-master
+  template:
+    metadata:
+      labels:
+        name: queue-master
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/queue-master:0.3.1
+        name: queue-master
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 300m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: queue-master
+  name: queue-master
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: queue-master
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: rabbitmq
+  name: rabbitmq
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: rabbitmq
   template:
     metadata:
       annotations:
-        prometheus.io/path: /metrics
-        prometheus.io/port: '9080'
-        prometheus.io/scrape: 'true'
+        prometheus.io/scrape: 'false'
       labels:
-        app: productpage
-        version: v1
+        name: rabbitmq
     spec:
       containers:
-      - image: docker.io/istio/examples-bookinfo-productpage-v1:1.17.0
-        imagePullPolicy: IfNotPresent
-        name: productpage
+      - image: rabbitmq:3.6.8-management
+        name: rabbitmq
         ports:
-        - containerPort: 9080
+        - containerPort: 15672
+          name: management
+        - containerPort: 5672
+          name: rabbitmq
         securityContext:
-          runAsUser: 1000
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            - DAC_OVERRIDE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      - image: kbudde/rabbitmq-exporter
+        name: rabbitmq-exporter
+        ports:
+        - containerPort: 9090
+          name: exporter
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: '9090'
+    prometheus.io/scrape: 'true'
+  labels:
+    name: rabbitmq
+  name: rabbitmq
+  namespace: log-enabled
+spec:
+  ports:
+  - name: rabbitmq
+    port: 5672
+    targetPort: 5672
+  - name: exporter
+    port: 9090
+    protocol: TCP
+    targetPort: exporter
+  selector:
+    name: rabbitmq
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: session-db
+  name: session-db
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: session-db
+  template:
+    metadata:
+      annotations:
+        prometheus.io.scrape: 'false'
+      labels:
+        name: session-db
+    spec:
+      containers:
+      - image: redis:alpine
+        name: session-db
+        ports:
+        - containerPort: 6379
+          name: redis
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: session-db
+  name: session-db
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    name: session-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: shipping
+  name: shipping
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: shipping
+  template:
+    metadata:
+      labels:
+        name: shipping
+    spec:
+      containers:
+      - env:
+        - name: ZIPKIN
+          value: zipkin.jaeger.svc.cluster.local
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/shipping:0.4.8
+        name: shipping
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 300m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
         volumeMounts:
         - mountPath: /tmp
-          name: tmp
-      serviceAccountName: bookinfo-productpage
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
       volumes:
-      - emptyDir: {}
-        name: tmp
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: shipping
+  name: shipping
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: shipping
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: user
+  name: user
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: user
+  template:
+    metadata:
+      labels:
+        name: user
+    spec:
+      containers:
+      - env:
+        - name: mongo
+          value: user-db:27017
+        image: weaveworksdemos/user:0.4.7
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: user
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 300m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: user
+  name: user
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: user
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: user-db
+  name: user-db
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: user-db
+  template:
+    metadata:
+      labels:
+        name: user-db
+    spec:
+      containers:
+      - image: weaveworksdemos/user-db:0.3.0
+        name: user-db
+        ports:
+        - containerPort: 27017
+          name: mongo
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: user-db
+  name: user-db
+  namespace: log-enabled
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    name: user-db
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: details
+  name: carts
   namespace: log-enabled
 spec:
   exportTo:
   - .
   hosts:
-  - details
+  - carts
   http:
   - route:
     - destination:
-        host: details
+        host: carts
     timeout: 1m
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: ratings
+  name: carts-db
   namespace: log-enabled
 spec:
   exportTo:
   - .
   hosts:
-  - ratings
+  - carts-db
   http:
   - route:
     - destination:
-        host: ratings
+        host: carts-db
     timeout: 1m
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: reviews
+  name: catalogue
   namespace: log-enabled
 spec:
   exportTo:
   - .
   hosts:
-  - reviews
+  - catalogue
   http:
   - route:
     - destination:
-        host: reviews
+        host: catalogue
     timeout: 1m
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: productpage
+  name: catalogue-db
   namespace: log-enabled
 spec:
   exportTo:
   - .
   hosts:
-  - productpage
+  - catalogue-db
   http:
   - route:
     - destination:
-        host: productpage
+        host: catalogue-db
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: front-end
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - front-end
+  http:
+  - route:
+    - destination:
+        host: front-end
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: orders
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - orders
+  http:
+  - route:
+    - destination:
+        host: orders
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: orders-db
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - orders-db
+  http:
+  - route:
+    - destination:
+        host: orders-db
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: payment
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - payment
+  http:
+  - route:
+    - destination:
+        host: payment
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: queue-master
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - queue-master
+  http:
+  - route:
+    - destination:
+        host: queue-master
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: rabbitmq
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - rabbitmq
+  http:
+  - route:
+    - destination:
+        host: rabbitmq
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: session-db
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - session-db
+  http:
+  - route:
+    - destination:
+        host: session-db
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: shipping
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - shipping
+  http:
+  - route:
+    - destination:
+        host: shipping
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: user
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - user
+  http:
+  - route:
+    - destination:
+        host: user
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: user-db
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - user-db
+  http:
+  - route:
+    - destination:
+        host: user-db
     timeout: 1m
 
 ---
