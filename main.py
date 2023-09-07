@@ -37,7 +37,7 @@ def parse_options():
     parser.add_argument(
         "-o",
         "--output",
-        default="output",
+        default="output.yaml",
         help='Specify a custom output file pathname. Defaults to "output"',
     )
     parser.add_argument(
