@@ -5,7 +5,6 @@ It does so by injecting the log analysis components into the input file.
 
 import argparse
 import yaml
-import json
 from elasticsearch import Elasticsearch
 from yrca import process_logs
 
