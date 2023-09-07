@@ -1,5 +1,5 @@
 """
-Tool for transforming a standard Kubernetes manifest file into a yRCA compatible one.
+Tool for extending a standard Kubernetes manifest file into a manifest with logging capabilities.
 It does so by injecting the log analysis components into the input file.
 """
 
@@ -8,7 +8,7 @@ import yaml
 import json
 from elasticsearch import Elasticsearch
 
-YRCA_NAMESPACE = "yrca-deployment"
+LOG_NAMESPACE = "log-enabled"
 
 
 def import_yaml(input_file):
@@ -31,8 +31,8 @@ def parse_options():
     parser.add_argument(
         "-i",
         "--inject",
-        action="store_true",
-        help="Inject log analysis components into the input file",
+        metavar="input_file",
+        help="Inject log analysis components into the specified input file",
     )
     parser.add_argument(
         "-o",
@@ -48,13 +48,10 @@ def parse_options():
     )
     # parser.add_argument('input_file', metavar='input_file', help='Input file to be processed')
     parser.add_argument(
-        "-c", "--connect", action="store_true", help="Connect to Elasticsearch instance"
+        "-c", "--connect", help="Connect to the specified Elasticsearch instance", type=str
     )
     parser.add_argument(
-        "-es", "--es_host", default="localhost", help="Elasticsearch host", type=str
-    )
-    parser.add_argument(
-        "-p", "--es_port", default=9200, help="Elasticsearch port", type=int
+        "-p", "--port", default=9200, help="Elasticsearch port", type=int
     )
     return parser.parse_args()
 
@@ -134,7 +131,7 @@ def replace_namespace(yaml_section):
     """
     if "metadata" not in yaml_section:
         yaml_section["metadata"] = {}
-    yaml_section["metadata"]["namespace"] = YRCA_NAMESPACE
+    yaml_section["metadata"]["namespace"] = LOG_NAMESPACE
     return yaml_section
 
 
@@ -145,8 +142,9 @@ def create_virtual_service(service_name, timeout):
     return {
         "apiVersion": "networking.istio.io/v1alpha3",
         "kind": "VirtualService",
-        "metadata": {"name": service_name, "namespace": YRCA_NAMESPACE},
+        "metadata": {"name": service_name, "namespace": LOG_NAMESPACE},
         "spec": {
+            "exportTo": ["."],
             "hosts": [service_name],
             "http": [
                 {"route": [{"destination": {"host": service_name}}], "timeout": timeout}
@@ -155,39 +153,47 @@ def create_virtual_service(service_name, timeout):
     }
 
 
-def get_istio_logs(es_host="localhost", es_port=9200):
+def get_istio_logs(es_host="localhost", port=9200):
     # Connect to the Elasticsearch instance
-    es = Elasticsearch([{"host": es_host, "port": es_port, "scheme": "http"}])
+    es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
     size = 10000
 
     # Define the query
     query = {
-        "size": size,
-        "sort": [{"@timestamp": {"order": "asc"}}],
-        "query": {
-            "bool": {
+        "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace.keyword": "yrca-deployment"}},
+                    {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
                     {"match": {"kubernetes.container.name": "istio-proxy"}},
-                    {"regexp": {"full_message": "^\s*\{.*\}\s*$"}}
+                    {"match": {"full_message": "start_time"}}
                 ]
             }
         }
-    }
-
+    minimal_query = {
+        "match_all": {}
+        }
     # Execute the query and get the results
     try:
-        response = es.search(index="logstash-gelf-*", body=query)
+        response = es.search(index="logstash-gelf-*", query=query, size=size)
     except Exception as e:
         print("Error while connecting to Elasticsearch instance")
+        print(e)
         return
 
 
     # Extract logs from the response
-    logs = [hit["_source"]["message"] for hit in response["hits"]["hits"]]
+    logs = [hit["_source"]["full_message"] for hit in response["hits"]["hits"]]
+
+    # Write logs to file
+    with open("istio_logs2.txt", "w", encoding="utf-8") as stream:
+        stream.write("\n".join(logs))
+        print(f"Output file written to istio_logs.txt")
 
     for log in logs:
         print(log)
+    #mapping = es.indices.get_mapping(index="logstash-gelf-*")
+    #print(mapping)
+
+    #print(response)
 
 
 
@@ -197,9 +203,9 @@ def main():
     """
     args = parse_options()
     if args.inject:
-        inject(args.input_file, args.timeout, args.output)
+        inject(args.inject, args.timeout, args.output)
     if args.connect:
-        get_istio_logs(args.es_host, args.es_port)
+        get_istio_logs(args.connect, args.port)
 
 
 if __name__ == "__main__":

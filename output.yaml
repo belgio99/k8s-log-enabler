@@ -2,16 +2,16 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: yrca-istio-system
+  name: log-istio-system
   labels:
-    usergroup: yrca
+    usergroup: log
 ---
 
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: istio-reader-service-account
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -29,7 +29,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: istiod-service-account
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -37,7 +37,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-log-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -81,7 +81,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-log-istio-system
   labels:
     app: istio-reader
     release: istio
@@ -125,7 +125,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -220,7 +220,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -238,7 +238,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -345,87 +345,87 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-log-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-clusterrole-yrca-istio-system
+  name: istio-reader-clusterrole-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-log-istio-system
   labels:
     app: istio-reader
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istio-reader-yrca-istio-system
+  name: istio-reader-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istio-reader-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-clusterrole-yrca-istio-system
+  name: istiod-clusterrole-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-gateway-controller-yrca-istio-system
+  name: istiod-gateway-controller-log-istio-system
 subjects:
 - kind: ServiceAccount
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: istio-validator-yrca-istio-system
+  name: istio-validator-log-istio-system
   labels:
     app: istiod
     release: istio
@@ -439,7 +439,7 @@ webhooks:
       # Should change from base but cannot for API compat
       service:
         name: istiod
-        namespace: yrca-istio-system
+        namespace: log-istio-system
         path: "/validate"
     rules:
       - operations:
@@ -471,7 +471,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: istio
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -498,26 +498,26 @@ data:
         "response_duration": "%RESPONSE_DURATION%",
         "response_tx_duration": "%RESPONSE_TX_DURATION%",
         "authority": "%REQ(:AUTHORITY)%",
-        "x-request-id": "%REQ(X-REQUEST-ID)%",
+        "x-request-id": "%REQ(X-REQUEST-ID)%"
       }
     defaultConfig:
-      discoveryAddress: istiod.yrca-istio-system.svc:15012
+      discoveryAddress: istiod.log-istio-system.svc:15012
       proxyMetadata: {}
       tracing:
         zipkin:
-          address: zipkin.yrca-istio-system:9411
+          address: zipkin.log-istio-system:9411
     defaultProviders:
       metrics:
       - prometheus
     enablePrometheusMerge: true
-    rootNamespace: yrca-istio-system
+    rootNamespace: log-istio-system
     trustDomain: cluster.local
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: istio-sidecar-injector
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -548,7 +548,7 @@ data:
         "hub": "docker.io/istio",
         "imagePullPolicy": "",
         "imagePullSecrets": [],
-        "istioNamespace": "yrca-istio-system",
+        "istioNamespace": "log-istio-system",
         "istiod": {
           "enableAnalysis": false
         },
@@ -564,7 +564,7 @@ data:
           "clusterName": "",
           "enabled": false
         },
-        "namespace": "yrca-istio-system",
+        "namespace": "log-istio-system",
         "network": "",
         "omitSidecarInjectorConfigMap": false,
         "oneNamespace": false,
@@ -2349,7 +2349,7 @@ data:
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: istio-sidecar-injector-yrca-istio-system
+  name: istio-sidecar-injector-log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -2357,11 +2357,11 @@ metadata:
     app: sidecar-injector
     release: istio
 webhooks:
-- name: rev.namespace.yrca-sidecar-injector.istio.io
+- name: rev.namespace.sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2374,23 +2374,23 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: In
       values:
       - "default"
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: NotIn
       values:
       - "false"
-- name: rev.object.yrca-sidecar-injector.istio.io
+- name: rev.object.log-sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2403,25 +2403,25 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: yrca-istio.io/rev
+    - key: istio.io/log-rev
       operator: DoesNotExist
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: NotIn
       values:
       - "false"
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: In
       values:
       - "default"
-- name: namespace.yrca-sidecar-injector.istio.io
+- name: namespace.log-sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2434,21 +2434,21 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: In
       values:
       - enabled
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: NotIn
       values:
       - "false"
-- name: object.yrca-sidecar-injector.istio.io
+- name: object.log-sidecar-injector.istio.io
   clientConfig:
     service:
       name: istiod
-      namespace: yrca-istio-system
+      namespace: log-istio-system
       path: "/inject"
       port: 443
   sideEffects: None
@@ -2461,24 +2461,24 @@ webhooks:
   admissionReviewVersions: ["v1beta1", "v1"]
   namespaceSelector:
     matchExpressions:
-    - key: yrca-istio-injection
+    - key: log-istio-injection
       operator: DoesNotExist
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: DoesNotExist
   objectSelector:
     matchExpressions:
-    - key: sidecar.istio.io/yrca-inject
+    - key: sidecar.istio.io/log-inject
       operator: In
       values:
       - "true"
-    - key: istio.io/yrca-rev
+    - key: istio.io/log-rev
       operator: DoesNotExist
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     istio.io/rev: default
@@ -2568,7 +2568,7 @@ spec:
           - name: PILOT_ENABLE_PROTOCOL_SNIFFING_FOR_INBOUND
             value: "true"
           - name: ISTIOD_ADDR
-            value: istiod.yrca-istio-system.svc:15012
+            value: istiod.log-istio-system.svc:15012
           - name: PILOT_ENABLE_ANALYSIS
             value: "false"
           - name: CLUSTER_ID
@@ -2577,6 +2577,8 @@ spec:
             valueFrom:
               resourceFieldRef:
                 resource: limits.memory
+          - name: PILOT_WATCHED_NAMESPACES
+            value: log-enabled
           resources:
             requests:
               cpu: 500m
@@ -2645,7 +2647,7 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     istio.io/rev: default
@@ -2664,7 +2666,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2689,8 +2691,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: istiod-yrca-istio-system
-  namespace: yrca-istio-system
+  name: istiod-log-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2708,7 +2710,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2719,30 +2721,30 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: istiod
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: istiod-yrca-istio-system
-  namespace: yrca-istio-system
+  name: istiod-log-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: istiod-yrca-istio-system
+  name: istiod-log-istio-system
 subjects:
   - kind: ServiceAccount
     name: istiod-service-account
-    namespace: yrca-istio-system
+    namespace: log-istio-system
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     app: istiod
     release: istio
@@ -2768,7 +2770,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: istiod
-  namespace: yrca-istio-system
+  namespace: log-istio-system
   labels:
     istio.io/rev: default
     install.operator.istio.io/owning-resource: unknown
@@ -2803,14 +2805,14 @@ spec:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: yrca-logging
+  name: log-elk
 
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: filebeat
-  namespace: yrca-logging
+  namespace: log-elk
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -2840,14 +2842,14 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: filebeat
-  namespace: yrca-logging
+  namespace: log-elk
 
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   serviceName: elasticsearch
   replicas: 1
@@ -2894,7 +2896,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     app: elasticsearch
@@ -2907,7 +2909,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   replicas: 1
   selector:
@@ -2924,8 +2926,8 @@ spec:
         env:
           - name: ELASTICSEARCH_HOSTS
             value: "elasticsearch:9200"
-          - name: LOG_LEVEL
-            value: "debug"
+          #- name: LOG_LEVEL
+          #  value: "debug"
         volumeMounts:
         - name: config
           mountPath: /usr/share/logstash/pipeline/
@@ -2940,7 +2942,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: logstash-config
-  namespace: yrca-logging
+  namespace: log-elk
 data:
   logstash.conf: |-
     input {
@@ -2984,7 +2986,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: logstash
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     app: logstash
@@ -2997,7 +2999,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kibana
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   replicas: 1
   selector:
@@ -3020,7 +3022,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kibana
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     app: kibana
@@ -3033,7 +3035,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: filebeat
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     matchLabels:
@@ -3093,7 +3095,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config
-  namespace: yrca-logging
+  namespace: log-elk
 data:
   filebeat.yml: |-
     filebeat.inputs:
@@ -3107,69 +3109,420 @@ data:
           - logs_path:
               logs_path: "/var/log/containers/"
       - drop_event.when.not.or:
-        - contains.kubernetes.namespace: "yrca-deployment"
+        - contains.kubernetes.namespace: "log-enabled"
     output.logstash:
       hosts: ['${LOGSTASH_HOSTS}']
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: yrca-deployment
+  name: log-enabled
   labels:
     istio-injection: disabled
-    usergroup: yrca
-    istio.io/rev: yrca
-    yrca-istio-injection: enabled
+    usergroup: log
+    istio.io/rev: log
+    log-istio-injection: enabled
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: details
+    service: details
+  name: details
+  namespace: log-enabled
+spec:
+  ports:
+  - name: http
+    port: 9080
+  selector:
+    app: details
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    account: details
+  name: bookinfo-details
+  namespace: log-enabled
+
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-1
-  namespace: yrca-deployment
+  labels:
+    app: details
+    version: v1
+  name: details-v1
+  namespace: log-enabled
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nginx-2
+      app: details
+      version: v1
   template:
     metadata:
       labels:
-        app: nginx-2
+        app: details
+        version: v1
     spec:
       containers:
-      - image: nginxdemos/hello:latest
-        name: nginx
+      - image: docker.io/istio/examples-bookinfo-details-v1:1.17.0
+        imagePullPolicy: IfNotPresent
+        name: details
         ports:
-        - containerPort: 80
+        - containerPort: 9080
+        securityContext:
+          runAsUser: 1000
+      serviceAccountName: bookinfo-details
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx
-  namespace: yrca-deployment
+  labels:
+    app: ratings
+    service: ratings
+  name: ratings
+  namespace: log-enabled
 spec:
   ports:
-  - port: 8080
-    protocol: TCP
-    targetPort: 80
+  - name: http
+    port: 9080
   selector:
-    app: nginx-2
-  type: LoadBalancer
+    app: ratings
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    account: ratings
+  name: bookinfo-ratings
+  namespace: log-enabled
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ratings
+    version: v1
+  name: ratings-v1
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ratings
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: ratings
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/istio/examples-bookinfo-ratings-v1:1.17.0
+        imagePullPolicy: IfNotPresent
+        name: ratings
+        ports:
+        - containerPort: 9080
+        securityContext:
+          runAsUser: 1000
+      serviceAccountName: bookinfo-ratings
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: reviews
+    service: reviews
+  name: reviews
+  namespace: log-enabled
+spec:
+  ports:
+  - name: http
+    port: 9080
+  selector:
+    app: reviews
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    account: reviews
+  name: bookinfo-reviews
+  namespace: log-enabled
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: reviews
+    version: v1
+  name: reviews-v1
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+    spec:
+      containers:
+      - env:
+        - name: LOG_DIR
+          value: /tmp/logs
+        image: docker.io/istio/examples-bookinfo-reviews-v1:1.17.0
+        imagePullPolicy: IfNotPresent
+        name: reviews
+        ports:
+        - containerPort: 9080
+        securityContext:
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /opt/ibm/wlp/output
+          name: wlp-output
+      serviceAccountName: bookinfo-reviews
+      volumes:
+      - emptyDir: {}
+        name: wlp-output
+      - emptyDir: {}
+        name: tmp
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: reviews
+    version: v2
+  name: reviews-v2
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v2
+    spec:
+      containers:
+      - env:
+        - name: LOG_DIR
+          value: /tmp/logs
+        image: docker.io/istio/examples-bookinfo-reviews-v2:1.17.0
+        imagePullPolicy: IfNotPresent
+        name: reviews
+        ports:
+        - containerPort: 9080
+        securityContext:
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /opt/ibm/wlp/output
+          name: wlp-output
+      serviceAccountName: bookinfo-reviews
+      volumes:
+      - emptyDir: {}
+        name: wlp-output
+      - emptyDir: {}
+        name: tmp
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: reviews
+    version: v3
+  name: reviews-v3
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reviews
+      version: v3
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v3
+    spec:
+      containers:
+      - env:
+        - name: LOG_DIR
+          value: /tmp/logs
+        image: docker.io/istio/examples-bookinfo-reviews-v3:1.17.0
+        imagePullPolicy: IfNotPresent
+        name: reviews
+        ports:
+        - containerPort: 9080
+        securityContext:
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+        - mountPath: /opt/ibm/wlp/output
+          name: wlp-output
+      serviceAccountName: bookinfo-reviews
+      volumes:
+      - emptyDir: {}
+        name: wlp-output
+      - emptyDir: {}
+        name: tmp
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: productpage
+    service: productpage
+  name: productpage
+  namespace: log-enabled
+spec:
+  ports:
+  - name: http
+    port: 9080
+  selector:
+    app: productpage
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    account: productpage
+  name: bookinfo-productpage
+  namespace: log-enabled
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: productpage
+    version: v1
+  name: productpage-v1
+  namespace: log-enabled
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: productpage
+      version: v1
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: '9080'
+        prometheus.io/scrape: 'true'
+      labels:
+        app: productpage
+        version: v1
+    spec:
+      containers:
+      - image: docker.io/istio/examples-bookinfo-productpage-v1:1.17.0
+        imagePullPolicy: IfNotPresent
+        name: productpage
+        ports:
+        - containerPort: 9080
+        securityContext:
+          runAsUser: 1000
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      serviceAccountName: bookinfo-productpage
+      volumes:
+      - emptyDir: {}
+        name: tmp
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: nginx
-  namespace: yrca-deployment
+  name: details
+  namespace: log-enabled
 spec:
+  exportTo:
+  - .
   hosts:
-  - nginx
+  - details
   http:
   - route:
     - destination:
-        host: nginx
-    timeout: 30s
+        host: details
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ratings
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - ratings
+  http:
+  - route:
+    - destination:
+        host: ratings
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - reviews
+  http:
+  - route:
+    - destination:
+        host: reviews
+    timeout: 1m
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: productpage
+  namespace: log-enabled
+spec:
+  exportTo:
+  - .
+  hosts:
+  - productpage
+  http:
+  - route:
+    - destination:
+        host: productpage
+    timeout: 1m
 
 ---

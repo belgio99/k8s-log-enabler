@@ -498,7 +498,7 @@ data:
         "response_duration": "%RESPONSE_DURATION%",
         "response_tx_duration": "%RESPONSE_TX_DURATION%",
         "authority": "%REQ(:AUTHORITY)%",
-        "x-request-id": "%REQ(X-REQUEST-ID)%",
+        "x-request-id": "%REQ(X-REQUEST-ID)%"
       }
     defaultConfig:
       discoveryAddress: istiod.log-istio-system.svc:15012
@@ -2577,6 +2577,8 @@ spec:
             valueFrom:
               resourceFieldRef:
                 resource: limits.memory
+          - name: PILOT_WATCHED_NAMESPACES
+            value: log-enabled
           resources:
             requests:
               cpu: 500m

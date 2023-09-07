@@ -19,7 +19,7 @@
          "request": "launch",
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
-         "args": ["--inject", "test_deployment_1.yaml"]
+         "args": ["-i", "test_deployment_1.yaml"]
       },
       {
          "name": "Python: Inject 2",
@@ -27,7 +27,7 @@
          "request": "launch",
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
-         "args": ["--inject", "test_deployment_2.yaml"]
+         "args": ["-i", "test_deployment_2.yaml"]
       },
       {
          "name": "Python: DB Connection",
@@ -43,7 +43,7 @@
           "id": "es_port",
           "type": "promptString",
           "description": "Enter the Minikube port number",
-          "default": "54100"  // optional default value
+          "default": "60979"  // optional default value
       }
    ]
 }
