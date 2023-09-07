@@ -6,7 +6,7 @@ It does so by injecting the log analysis components into the input file.
 import argparse
 import yaml
 from elasticsearch import Elasticsearch
-from yrca import process_logs
+from yrca import yrca_process_logs
 
 LOG_NAMESPACE = "log-enabled"
 
@@ -37,8 +37,8 @@ def parse_options():
     parser.add_argument(
         "-o",
         "--output",
-        default="output.yaml",
-        help='Specify a custom output file pathname. Defaults to "output.yaml"',
+        default="output",
+        help='Specify a custom output file pathname. Defaults to "output"',
     )
     parser.add_argument(
         "-t",
@@ -46,13 +46,17 @@ def parse_options():
         default="1m",
         help="Specify a custom Envoy timeout. Defaults to 1m",
     )
-    # parser.add_argument('input_file', metavar='input_file', help='Input file to be processed')
     parser.add_argument(
         "-c", "--connect", help="Connect to the specified Elasticsearch instance", type=str
     )
     parser.add_argument(
         "-p", "--port", default=9200, help="Elasticsearch port", type=int
     )
+    parser.add_argument(
+        "--dump-all", help="Dump all the logs in the Elasticsearch instance (to a file, if used with -o). Cannot be used with yRCA log output format.", type=str)
+    parser.add_argument(
+        "-f", "--format", choices=['yrca', 'gelf', 'syslog'], default='yrca', help="Specify the format of the logs to be processed. Defaults to yrca."
+        )
     return parser.parse_args()
 
 
@@ -153,7 +157,11 @@ def create_virtual_service(service_name, timeout):
     }
 
 
-def get_istio_logs(es_host="localhost", port=9200):
+def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=False, format="yrca"):
+
+    if format == "yrca" & dump_all:
+        print("yRCA only requires the dump of Envoy proxies, so it cannot be used with --dump-all")
+        return None
     # Connect to the Elasticsearch instance
     es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
     size = 10000
@@ -168,9 +176,16 @@ def get_istio_logs(es_host="localhost", port=9200):
                 ]
             }
         }
-    # Execute the query and get the results
+    if dump_all:
+        query = {
+            "bool": {
+                    "must": [
+                        {"match": {"kubernetes.namespace": "log-enabled"}},
+                    ]
+                }
+            }
     try:
-        response = es.search(index="filebeat-*", query=query, size=size)
+        response = es.search(index="filebeat-*", query=query, size=size, sort="@timestamp:asc")
     except Exception as e:
         print("Error while connecting to Elasticsearch instance")
         print(e)
@@ -178,30 +193,49 @@ def get_istio_logs(es_host="localhost", port=9200):
     
 
     logs = []
-
+    if format == "yrca":
     # Extract logs from the response
-    for hit in response["hits"]["hits"]:
-        pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
-        log_message = hit["_source"]["message"]
-        formatted_log = f"{pod_name} {log_message}"
-        logs.append(formatted_log)
+        for hit in response["hits"]["hits"]:
+            pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
+            log_message = hit["_source"]["message"]
+            formatted_log = f"{pod_name} {log_message}"
+            logs.append(formatted_log)
 
-    return logs
+        logs = yrca_process_logs(logs)
+
+    elif format == "gelf":
+        for hit in response["hits"]["hits"]:
+            version = "1.1"
+            host = hit["_source"]["host"]["name"]
+            short_message = hit["_source"]["message"].split("\n")[0]  # Assuming first line is short message
+            full_message = hit["_source"]["message"]
+            timestamp = hit["_source"]["@timestamp"]
+            level = "INFO"  # This may need to be converted into GELF level
+
+            formatted_log = f"version: {version}, host: {host}, short_message: {short_message}, full_message: {full_message}, timestamp: {timestamp}, level: {level}"
+            logs.append(formatted_log)
+
+    elif format == "syslog":
+        for hit in response["hits"]["hits"]:
+            priority = "<134>"  # Sample priority, this can vary based on severity and facility
+            timestamp = hit["_source"]["@timestamp"]
+            hostname = hit["_source"]["host"]["name"]
+            app_name = hit["_source"]["kubernetes"]["container"]["name"]
+            procid = hit["_source"]["kubernetes"]["pod"]["name"]
+            msgid = "-"  # Placeholder, you might want to replace it with a proper ID if available
+            structured_data = "-"  # Placeholder, replace if you have structured data
+            msg = hit["_source"]["message"]
+
+            formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msgid} {structured_data} {msg}"
+            logs.append(formatted_log)
 
 
-    # Write logs to file
-    #with open("istio_logs2.txt", "w", encoding="utf-8") as stream:
-    #    stream.write("\n".join(logs))
-    #    print(f"Output file written to istio_logs.txt")
-#
-    #for log in logs:
-    #    print(log)
-    ##mapping = es.indices.get_mapping(index="logstash-gelf-*")
-    #print(mapping)
-
-    #print(response)
-
-
+    if output_file:
+        with open(output_file, "w", encoding="utf-8") as stream:
+            stream.write("\n".join(logs))
+            print(f"Output file written to {output_file}")
+    else:
+        print("\n".join(logs))
 
 def main():
     """
@@ -211,8 +245,9 @@ def main():
     if args.inject:
         inject(args.inject, args.timeout, args.output)
     if args.connect:
-        logs = get_istio_logs(args.connect, args.port)
-        process_logs(logs)
+        get_istio_logs(args.connect, args.port, args.output, args.dump_all, args.format)
+
+        
 
 
 if __name__ == "__main__":

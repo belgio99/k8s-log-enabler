@@ -1,6 +1,8 @@
 import json
 from datetime import datetime, timedelta
 
+logs = []
+
 def produce_yrca_logs(requestJson, responseJson):
     """Process and print logs based on request and response data."""
     
@@ -16,30 +18,30 @@ def produce_yrca_logs(requestJson, responseJson):
         responseServiceName = requestJson.get("authority", "")
 
     # Define common print pattern
-    def print_log(time, service_name, action, target_service, req_id):
-        print(f"{time} - INFO - {service_name} - {action} {target_service} (request_id: {req_id})")
+    def append_log(time, service_name, action, target_service, req_id):
+        logs.append(f"{time} - INFO - {service_name} - {action} {target_service} (request_id: {req_id})")
 
     if not responseJson:
-        print_log(requestStartTime, requestServiceName, "Sending request to", responseServiceName, requestID)
+        append_log(requestStartTime, requestServiceName, "Sending request to", responseServiceName, requestID)
         requestDateTime = datetime.strptime(requestStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta = timedelta(milliseconds=requestJson["duration"])
         requestEndTime = (requestDateTime + delta).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
-        print_log(requestEndTime, requestServiceName, "Failing to contact", requestJson["authority"], requestID)
+        append_log(requestEndTime, requestServiceName, "Failing to contact", requestJson["authority"], requestID)
 
     else:
-        print_log(requestStartTime, requestServiceName, "Sending request to", responseServiceName, requestID)
-        print_log(responseStartTime, responseServiceName, "Reading request from", requestServiceName, requestID)
+        append_log(requestStartTime, requestServiceName, "Sending request to", responseServiceName, requestID)
+        append_log(responseStartTime, responseServiceName, "Reading request from", requestServiceName, requestID)
         responseDateTime = datetime.strptime(responseStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta1 = timedelta(milliseconds=responseJson["duration"])
         responseEndTime = (responseDateTime + delta1).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
-        print_log(responseEndTime, responseServiceName, "Answering response to", requestServiceName, requestID)
+        append_log(responseEndTime, responseServiceName, "Answering response to", requestServiceName, requestID)
         requestDateTime = datetime.strptime(requestStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta2 = timedelta(milliseconds=requestJson["duration"])
         requestEndTime = (requestDateTime + delta2).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
         status_msg = "Received response OK from" if responseCode == 200 else "Received response ERROR from"
-        print_log(requestEndTime, requestServiceName, status_msg, responseServiceName, requestID)
+        append_log(requestEndTime, requestServiceName, status_msg, responseServiceName, requestID)
 
-def process_logs(log_lines):
+def yrca_process_logs(log_lines):
     """Process the provided list of log lines."""
     
     ToBeProcessed = {}
@@ -77,4 +79,6 @@ def process_logs(log_lines):
             else:
                 ToBeProcessed[key] = jsonLog
 
-__all__ = ['process_logs']
+    return logs
+
+__all__ = ['yrca_process_logs']
