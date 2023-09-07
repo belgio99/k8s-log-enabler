@@ -100,97 +100,6 @@ spec:
   ports:
     - protocol: TCP
       port: 9200
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: logstash
-  namespace: log-elk
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: logstash
-  template:
-    metadata:
-      labels:
-        app: logstash
-    spec:
-      containers:
-      - name: logstash
-        image: docker.elastic.co/logstash/logstash:7.15.0
-        env:
-          - name: ELASTICSEARCH_HOSTS
-            value: "elasticsearch:9200"
-          #- name: LOG_LEVEL
-          #  value: "debug"
-        volumeMounts:
-        - name: config
-          mountPath: /usr/share/logstash/pipeline/
-          readOnly: true
-      volumes:
-      - name: config
-        configMap:
-          name: logstash-config
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: logstash-config
-  namespace: log-elk
-data:
-  logstash.conf: |-
-    input {
-      beats {
-        port => 5044
-      }
-    }
-
-    filter {
-      if [message] =~ /{/ {
-        json {
-          source => "message"
-        }
-      }
-      mutate {
-        rename => {
-          "log" => "short_message"
-          "stream" => "host"
-        }
-        add_field => {
-          "version" => "1.1"
-          "full_message" => "%{message}"
-          "level" => "6"
-        }
-      }
-      date {
-        match => [ "time", "ISO8601" ]
-        target => "timestamp"
-      }
-    }
-
-    output {
-      elasticsearch {
-        hosts => "${ELASTICSEARCH_HOSTS}"
-        index => "logstash-gelf-%{+YYYY.MM.dd}"
-      }
-    }
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: logstash
-  namespace: log-elk
-spec:
-  selector:
-    app: logstash
-  ports:
-    - protocol: TCP
-      port: 5044
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -255,8 +164,8 @@ spec:
         securityContext:
           runAsUser: 0
         env:
-        - name: LOGSTASH_HOSTS
-          value: "logstash:5044"
+        - name: ELASTICSEARCH_HOSTS
+          value: "elasticsearch:9200"
         - name: NODE_NAME
           valueFrom:
             fieldRef:
@@ -307,5 +216,5 @@ data:
               logs_path: "/var/log/containers/"
       - drop_event.when.not.or:
         - contains.kubernetes.namespace: "log-enabled"
-    output.logstash:
-      hosts: ['${LOGSTASH_HOSTS}']
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_HOSTS}']

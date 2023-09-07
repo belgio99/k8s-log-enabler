@@ -162,26 +162,27 @@ def get_istio_logs(es_host="localhost", port=9200):
     query = {
         "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
+                    {"match": {"kubernetes.namespace": "log-enabled"}},
                     {"match": {"kubernetes.container.name": "istio-proxy"}},
-                    {"match": {"full_message": "start_time"}}
+                    {"match": {"message": "start_time"}}
                 ]
             }
         }
     # Execute the query and get the results
     try:
-        response = es.search(index="logstash-gelf-*", query=query, size=size)
+        response = es.search(index="filebeat-*", query=query, size=size)
     except Exception as e:
         print("Error while connecting to Elasticsearch instance")
         print(e)
         return None
+    
 
     logs = []
 
     # Extract logs from the response
     for hit in response["hits"]["hits"]:
         pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
-        log_message = hit["_source"]["full_message"]
+        log_message = hit["_source"]["message"]
         formatted_log = f"{pod_name} {log_message}"
         logs.append(formatted_log)
 
