@@ -7,6 +7,7 @@ import argparse
 import yaml
 import json
 from elasticsearch import Elasticsearch
+from yrca import process_logs
 
 LOG_NAMESPACE = "log-enabled"
 
@@ -168,29 +169,34 @@ def get_istio_logs(es_host="localhost", port=9200):
                 ]
             }
         }
-    minimal_query = {
-        "match_all": {}
-        }
     # Execute the query and get the results
     try:
         response = es.search(index="logstash-gelf-*", query=query, size=size)
     except Exception as e:
         print("Error while connecting to Elasticsearch instance")
         print(e)
-        return
+        return None
 
+    logs = []
 
     # Extract logs from the response
-    logs = [hit["_source"]["full_message"] for hit in response["hits"]["hits"]]
+    for hit in response["hits"]["hits"]:
+        pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
+        log_message = hit["_source"]["full_message"]
+        formatted_log = f"{pod_name} {log_message}"
+        logs.append(formatted_log)
+
+    return logs
+
 
     # Write logs to file
-    with open("istio_logs2.txt", "w", encoding="utf-8") as stream:
-        stream.write("\n".join(logs))
-        print(f"Output file written to istio_logs.txt")
-
-    for log in logs:
-        print(log)
-    #mapping = es.indices.get_mapping(index="logstash-gelf-*")
+    #with open("istio_logs2.txt", "w", encoding="utf-8") as stream:
+    #    stream.write("\n".join(logs))
+    #    print(f"Output file written to istio_logs.txt")
+#
+    #for log in logs:
+    #    print(log)
+    ##mapping = es.indices.get_mapping(index="logstash-gelf-*")
     #print(mapping)
 
     #print(response)
@@ -205,7 +211,8 @@ def main():
     if args.inject:
         inject(args.inject, args.timeout, args.output)
     if args.connect:
-        get_istio_logs(args.connect, args.port)
+        logs = get_istio_logs(args.connect, args.port)
+        process_logs(logs)
 
 
 if __name__ == "__main__":
