@@ -159,75 +159,89 @@ def create_virtual_service(service_name, timeout):
 
 def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=False, format="yrca"):
 
-    if format == "yrca" & dump_all:
+    if format == "yrca" and dump_all:
         print("yRCA only requires the dump of Envoy proxies, so it cannot be used with --dump-all")
         return None
+
     # Connect to the Elasticsearch instance
     es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
-    size = 10000
 
     # Define the query
     query = {
         "bool": {
-                "must": [
-                    {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
-                    {"match": {"kubernetes.container.name": "istio-proxy"}},
-                    {"match": {"full_message": "start_time"}}
-                ]
-            }
+            "must": [
+                {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
+                {"match": {"kubernetes.container.name": "istio-proxy"}},
+                {"match": {"full_message": "start_time"}}
+            ]
         }
+    }
     if dump_all:
         query = {
             "bool": {
-                    "must": [
-                        {"match": {"kubernetes.namespace": "log-enabled"}},
-                    ]
-                }
+                "must": [
+                    {"match": {"kubernetes.namespace": "log-enabled"}},
+                ]
             }
+        }
+
+    # Use the scroll API
+    scroll_time = "1m"
+    size = 10000
+
     try:
-        response = es.search(index="logstash-*", query=query, size=size, sort="@timestamp:asc")
+        response = es.search(index="logstash-*", query=query, scroll=scroll_time, size=size, sort="@timestamp:asc")
     except Exception as e:
         print("Error while connecting to Elasticsearch instance")
         print(e)
         return None
 
     logs = []
-    if format == "yrca":
-    # Extract logs from the response
-        for hit in response["hits"]["hits"]:
-            pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
-            log_message = hit["_source"]["message"]
-            formatted_log = f"{pod_name} {log_message}"
-            logs.append(formatted_log)
 
+    # While there are logs to fetch, keep fetching
+    while len(response['hits']['hits']):
+        for hit in response["hits"]["hits"]:
+            if format == "yrca":
+                pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
+                log_message = hit["_source"]["message"]
+                formatted_log = f"{pod_name} {log_message}"
+                logs.append(formatted_log)
+
+            elif format == "gelf":
+                version = "1.1"
+                host = hit["_source"]["host"]["name"]
+                short_message = hit["_source"]["message"].split("\n")[0]
+                full_message = hit["_source"]["message"]
+                timestamp = hit["_source"]["@timestamp"]
+                level = "INFO"
+                formatted_log = f"version: {version}, host: {host}, short_message: {short_message}, full_message: {full_message}, timestamp: {timestamp}, level: {level}"
+                logs.append(formatted_log)
+
+            elif format == "syslog":
+                priority = "<134>"
+                timestamp = hit["_source"]["@timestamp"]
+                hostname = hit["_source"]["host"]["name"]
+                app_name = hit["_source"]["kubernetes"]["container"]["name"]
+                procid = hit["_source"]["kubernetes"]["pod"]["name"]
+                msgid = "-"
+                structured_data = "-"
+                msg = hit["_source"]["message"]
+                formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msgid} {structured_data} {msg}"
+                logs.append(formatted_log)
+
+        # Fetch the next batch of logs using the scroll API
+        response = es.scroll(scroll_id=response['_scroll_id'], scroll=scroll_time)
+
+    # Post-process logs for yrca
+    if format == "yrca":
         logs = yrca_process_logs(logs)
 
-    elif format == "gelf":
-        for hit in response["hits"]["hits"]:
-            version = "1.1"
-            host = hit["_source"]["host"]["name"]
-            short_message = hit["_source"]["message"].split("\n")[0]  # Assuming first line is short message
-            full_message = hit["_source"]["message"]
-            timestamp = hit["_source"]["@timestamp"]
-            level = "INFO"  # This may need to be converted into GELF level
-
-            formatted_log = f"version: {version}, host: {host}, short_message: {short_message}, full_message: {full_message}, timestamp: {timestamp}, level: {level}"
-            logs.append(formatted_log)
-
-    elif format == "syslog":
-        for hit in response["hits"]["hits"]:
-            priority = "<134>"  # Sample priority, this can vary based on severity and facility
-            timestamp = hit["_source"]["@timestamp"]
-            hostname = hit["_source"]["host"]["name"]
-            app_name = hit["_source"]["kubernetes"]["container"]["name"]
-            procid = hit["_source"]["kubernetes"]["pod"]["name"]
-            msgid = "-"  # Placeholder, you might want to replace it with a proper ID if available
-            structured_data = "-"  # Placeholder, replace if you have structured data
-            msg = hit["_source"]["message"]
-
-            formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msgid} {structured_data} {msg}"
-            logs.append(formatted_log)
-
+    if output_file:
+        with open(output_file, "w", encoding="utf-8") as stream:
+            stream.write("\n".join(logs))
+            print(f"Output file written to {output_file}")
+    else:
+        print("\n".join(logs))
 
     if output_file:
         with open(output_file, "w", encoding="utf-8") as stream:
