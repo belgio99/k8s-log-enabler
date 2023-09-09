@@ -37,7 +37,6 @@ def parse_options():
     parser.add_argument(
         "-o",
         "--output",
-        default="output.yaml",
         help='Specify a custom output file pathname. Defaults to "output"',
     )
     parser.add_argument(
@@ -86,6 +85,9 @@ def inject(yaml_file, timeout="1m", output_file="output.yaml"):
     """
     Inject log analysis components into a YAML file.
     """
+    if not output_file:
+        output_file = "output.yaml"
+
     try:
         manifests = load_manifests(
             [
@@ -172,7 +174,7 @@ def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=Fa
             "must": [
                 {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
                 {"match": {"kubernetes.container.name": "istio-proxy"}},
-                {"match": {"full_message": "start_time"}}
+                {"match": {"message": "start_time"}}
             ]
         }
     }
@@ -235,13 +237,6 @@ def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=Fa
     # Post-process logs for yrca
     if format == "yrca":
         logs = yrca_process_logs(logs)
-
-    if output_file:
-        with open(output_file, "w", encoding="utf-8") as stream:
-            stream.write("\n".join(logs))
-            print(f"Output file written to {output_file}")
-    else:
-        print("\n".join(logs))
 
     if output_file:
         with open(output_file, "w", encoding="utf-8") as stream:

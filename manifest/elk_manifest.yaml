@@ -156,12 +156,13 @@ data:
           tag_on_failure => ["_jsonparsefailure"]
         }
       }
+    }
       
 
     output {
       elasticsearch {
         hosts => "${ELASTICSEARCH_HOSTS}"
-        index => "logstash-gelf-%{+YYYY.MM.dd}"
+        index => "logstash-%{+YYYY.MM.dd}"
       }
     }
 
