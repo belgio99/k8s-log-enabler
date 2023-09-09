@@ -27,13 +27,16 @@ def parse_options():
     parser.add_argument(
         "-o",
         "--output",
-        help='Specify a custom output file pathname. Defaults to "output"',
+        help='Specify an output file pathname. If not specified, the output will be printed to stdout.',
     )
     parser.add_argument(
         "-t",
         "--timeout",
-        default="1m",
-        help="Specify a custom Envoy timeout. Defaults to 1m",
+        default="15s",
+        help="Specify a custom Envoy timeout. Defaults to 15s",
+    )
+    parser.add_argument(
+        "--no-header", action="store_true", help="Do not add the Istio and ELK Stack components to the output file (useful for adding deployments to an already )"
     )
     parser.add_argument(
         "-c", "--connect", help="Connect to the specified Elasticsearch instance", type=str
@@ -42,13 +45,16 @@ def parse_options():
         "-p", "--port", default=9200, help="Elasticsearch port", type=int
     )
     parser.add_argument(
+        "--pod", help="Dumps the logs of the specified pod (to a file, if used with -o). Cannot be used with yRCA log output format.", type=str
+    )
+    parser.add_argument(
         "--dump-all", help="Dump all the logs in the Elasticsearch instance (to a file, if used with -o). Cannot be used with yRCA log output format.", type=str)
     parser.add_argument(
         "-f", "--format", choices=['yrca', 'gelf', 'syslog'], default='yrca', help="Specify the format of the logs to be processed. Defaults to yrca."
         )
     return parser.parse_args()
 
-def inject(yaml_file, timeout="1m", output_file="output.yaml"):
+def inject(yaml_file, timeout="1m", no_header=False):
     """
     Inject log analysis components into a YAML file.
     """
@@ -80,22 +86,23 @@ def inject(yaml_file, timeout="1m", output_file="output.yaml"):
         virtual_services_text = [
             yaml.dump(vs, default_flow_style=False) for vs in virtual_services
         ]
-        merged_text = build_merged_text(
-            [
-                manifests["manifest/istio_manifest.yaml"],
-                manifests["manifest/elk_manifest.yaml"],
-                manifests["manifest/namespace_manifest.yaml"],
-            ]
-            + docs_text
-            + virtual_services_text
-        )
+        if no_header:
+            merged_text = build_merged_text(docs_text + virtual_services_text)
 
-        with open(output_file, "w", encoding="utf-8") as stream:
-            stream.write(merged_text)
-            print(f"Output file written to {output_file}")
-
+        else:
+            merged_text = build_merged_text(
+                [
+                    manifests["manifest/istio_manifest.yaml"],
+                    manifests["manifest/elk_manifest.yaml"],
+                    manifests["manifest/namespace_manifest.yaml"],
+                ]
+                + docs_text
+                + virtual_services_text
+            )
     except FileNotFoundError as exc:
         print(exc)
+
+    return merged_text
 
 
 def replace_namespace(yaml_section):
@@ -126,10 +133,14 @@ def create_virtual_service(service_name, timeout):
     }
 
 
-def connect_elasticsearch(es_host="localhost", port=9200, output_file=None, dump_all=False, format="yrca"):
+def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format="yrca", pod=None):
 
-    if format == "yrca" and dump_all:
-        print("yRCA only requires the dump of Envoy proxies, so it cannot be used with --dump-all")
+    if format == "yrca" and (dump_all or pod):
+        print("yRCA only requires the dump of Envoy proxies, so it cannot be used with --dump-all or --pod")
+        return None
+    
+    if dump_all and pod:
+        print("Cannot use --dump-all and --pod together")
         return None
 
     # Connect to the Elasticsearch instance
@@ -150,6 +161,15 @@ def connect_elasticsearch(es_host="localhost", port=9200, output_file=None, dump
             "bool": {
                 "must": [
                     {"match": {"kubernetes.namespace": "log-enabled"}},
+                ]
+            }
+        }
+    elif pod:
+        query = {
+            "bool": {
+                "must": [
+                    {"match": {"kubernetes.namespace": "log-enabled"}},
+                    {"match": {"kubernetes.pod.name": pod}},
                 ]
             }
         }
@@ -200,17 +220,14 @@ def connect_elasticsearch(es_host="localhost", port=9200, output_file=None, dump
 
         # Fetch the next batch of logs using the scroll API
         response = es.scroll(scroll_id=response['_scroll_id'], scroll=scroll_time)
+    
+    es.clear_scroll(scroll_id=response['_scroll_id'])
 
     # Post-process logs for yrca
     if format == "yrca":
         logs = yrca_process_logs(logs)
 
-    if output_file:
-        with open(output_file, "w", encoding="utf-8") as stream:
-            stream.write("\n".join(logs))
-            print(f"Output file written to {output_file}")
-    else:
-        print("\n".join(logs))
+    return logs
 
 def main():
     """
@@ -218,9 +235,16 @@ def main():
     """
     args = parse_options()
     if args.inject:
-        inject(args.inject, args.timeout, args.output)
+        output = inject(args.inject, args.timeout, args.no_header)
     if args.connect:
-        connect_elasticsearch(args.connect, args.port, args.output, args.dump_all, args.format)
+        output = connect_elasticsearch(args.connect, args.port, args.dump_all, args.format, args.pod)
+
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as stream:
+            stream.write("\n".join(output))
+            print(f"Output file written to {args.output}")
+    else:
+        print("\n".join(output))    
 
 
 
