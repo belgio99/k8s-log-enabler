@@ -3,7 +3,4 @@ kind: Namespace
 metadata:
   name: log-enabled
   labels:
-    istio-injection: disabled
-    usergroup: log
-    istio.io/rev: log
-    log-istio-injection: enabled
+    istio.io/rev: logrevision
