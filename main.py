@@ -58,8 +58,6 @@ def inject(yaml_file, timeout="1m", no_header=False):
     """
     Inject log analysis components into a YAML file.
     """
-    if not output_file:
-        output_file = "output.yaml"
 
     try:
         manifests = load_manifests(
@@ -241,10 +239,17 @@ def main():
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as stream:
-            stream.write("\n".join(output))
+            if isinstance(output, list):
+                stream.write("\n".join(output))
+            else:
+                stream.write(output)
             print(f"Output file written to {args.output}")
     else:
-        print("\n".join(output))    
+        if isinstance(output, list):
+            print("\n".join(output))
+        else:
+            print(output)
+   
 
 
 
