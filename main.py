@@ -7,20 +7,10 @@ import argparse
 import yaml
 from elasticsearch import Elasticsearch
 from yrca import yrca_process_logs
+from utils import load_manifests, build_merged_text
 
 LOG_NAMESPACE = "log-enabled"
 
-
-def import_yaml(input_file):
-    """
-    Import a YAML file and return its content as a dictionary.
-    """
-    with open(input_file, "r", encoding="utf-8") as stream:
-        try:
-            return yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            print(exc)
-            return None
 
 
 def parse_options():
@@ -57,29 +47,6 @@ def parse_options():
         "-f", "--format", choices=['yrca', 'gelf', 'syslog'], default='yrca', help="Specify the format of the logs to be processed. Defaults to yrca."
         )
     return parser.parse_args()
-
-
-def load_manifests(filenames):
-    """
-    Load multiple manifest contents from a list of files.
-    """
-    return {filename: load_manifest(filename) for filename in filenames}
-
-
-def load_manifest(filename):
-    """
-    Load manifest content from a file.
-    """
-    with open(filename, "r", encoding="utf-8") as file:
-        return file.read()
-
-
-def build_merged_text(manifests):
-    """
-    Build merged text from list of manifest texts.
-    """
-    return "\n---\n".join(manifests) + "\n---\n"
-
 
 def inject(yaml_file, timeout="1m", output_file="output.yaml"):
     """
@@ -159,7 +126,7 @@ def create_virtual_service(service_name, timeout):
     }
 
 
-def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=False, format="yrca"):
+def connect_elasticsearch(es_host="localhost", port=9200, output_file=None, dump_all=False, format="yrca"):
 
     if format == "yrca" and dump_all:
         print("yRCA only requires the dump of Envoy proxies, so it cannot be used with --dump-all")
@@ -247,15 +214,15 @@ def get_istio_logs(es_host="localhost", port=9200, output_file=None, dump_all=Fa
 
 def main():
     """
-    Main function to execute script.
+    Main function to execute the script.
     """
     args = parse_options()
     if args.inject:
         inject(args.inject, args.timeout, args.output)
     if args.connect:
-        get_istio_logs(args.connect, args.port, args.output, args.dump_all, args.format)
+        connect_elasticsearch(args.connect, args.port, args.output, args.dump_all, args.format)
 
-        
+
 
 
 if __name__ == "__main__":
