@@ -2,14 +2,15 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: yrca-logging
-
+  name: log-elk
+  labels:
+    istio-injection: disabled
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: filebeat
-  namespace: yrca-logging
+  namespace: log-elk
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -39,14 +40,14 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: filebeat
-  namespace: yrca-logging
+  namespace: log-elk
 
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: elasticsearch
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   serviceName: elasticsearch
   replicas: 1
@@ -93,7 +94,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: elasticsearch
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     app: elasticsearch
@@ -106,7 +107,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   replicas: 1
   selector:
@@ -123,8 +124,8 @@ spec:
         env:
           - name: ELASTICSEARCH_HOSTS
             value: "elasticsearch:9200"
-          - name: LOG_LEVEL
-            value: "debug"
+          #- name: LOG_LEVEL
+          #  value: "debug"
         volumeMounts:
         - name: config
           mountPath: /usr/share/logstash/pipeline/
@@ -139,7 +140,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: logstash-config
-  namespace: yrca-logging
+  namespace: log-elk
 data:
   logstash.conf: |-
     input {
@@ -147,34 +148,18 @@ data:
         port => 5044
       }
     }
-
     filter {
-      if [message] =~ /{/ {
+      if [message] =~ /^{.*}$/ {
         json {
           source => "message"
+          tag_on_failure => ["_jsonparsefailure"]
         }
-      }
-      mutate {
-        rename => {
-          "log" => "short_message"
-          "stream" => "host"
-        }
-        add_field => {
-          "version" => "1.1"
-          "full_message" => "%{message}"
-          "level" => "6"
-        }
-      }
-      date {
-        match => [ "time", "ISO8601" ]
-        target => "timestamp"
       }
     }
-
     output {
       elasticsearch {
         hosts => "${ELASTICSEARCH_HOSTS}"
-        index => "logstash-gelf-%{+YYYY.MM.dd}"
+        index => "logstash-%{+YYYY.MM.dd}"
       }
     }
 
@@ -183,7 +168,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: logstash
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     app: logstash
@@ -196,7 +181,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kibana
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   replicas: 1
   selector:
@@ -219,7 +204,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kibana
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     app: kibana
@@ -232,7 +217,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: filebeat
-  namespace: yrca-logging
+  namespace: log-elk
 spec:
   selector:
     matchLabels:
@@ -292,7 +277,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config
-  namespace: yrca-logging
+  namespace: log-elk
 data:
   filebeat.yml: |-
     filebeat.inputs:
@@ -306,6 +291,6 @@ data:
           - logs_path:
               logs_path: "/var/log/containers/"
       - drop_event.when.not.or:
-        - contains.kubernetes.namespace: "yrca-deployment"
+        - contains.kubernetes.namespace: "log-enabled"
     output.logstash:
       hosts: ['${LOGSTASH_HOSTS}']
