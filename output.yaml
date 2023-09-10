@@ -1,8 +1,8 @@
----
 apiVersion: v1
 kind: Namespace
 metadata:
   name: log-istio-system
+
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -2917,7 +2917,6 @@ data:
         port => 5044
       }
     }
-
     filter {
       if [message] =~ /^{.*}$/ {
         json {
@@ -2926,8 +2925,6 @@ data:
         }
       }
     }
-      
-
     output {
       elasticsearch {
         hosts => "${ELASTICSEARCH_HOSTS}"
@@ -3423,7 +3420,7 @@ spec:
   - route:
     - destination:
         host: details
-    timeout: 1m
+    timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -3440,7 +3437,7 @@ spec:
   - route:
     - destination:
         host: ratings
-    timeout: 1m
+    timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -3457,7 +3454,7 @@ spec:
   - route:
     - destination:
         host: reviews
-    timeout: 1m
+    timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
@@ -3474,6 +3471,6 @@ spec:
   - route:
     - destination:
         host: productpage
-    timeout: 1m
+    timeout: 15s
 
 ---

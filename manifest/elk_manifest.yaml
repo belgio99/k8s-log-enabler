@@ -148,7 +148,6 @@ data:
         port => 5044
       }
     }
-
     filter {
       if [message] =~ /^{.*}$/ {
         json {
@@ -157,8 +156,6 @@ data:
         }
       }
     }
-      
-
     output {
       elasticsearch {
         hosts => "${ELASTICSEARCH_HOSTS}"

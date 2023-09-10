@@ -122,7 +122,6 @@ def create_virtual_service(service_name, timeout):
         "kind": "VirtualService",
         "metadata": {"name": service_name, "namespace": LOG_NAMESPACE},
         "spec": {
-            "exportTo": ["."],
             "hosts": [service_name],
             "http": [
                 {"route": [{"destination": {"host": service_name}}], "timeout": timeout}
