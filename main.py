@@ -10,6 +10,7 @@ from yrca import yrca_process_logs
 from utils import load_manifests, build_merged_text
 
 LOG_NAMESPACE = "log-enabled"
+DEFAULT_LOG_NAMESPACE_PREFIX = "log-enabled-"
 
 
 
@@ -36,6 +37,12 @@ def parse_options():
         help="Specify a custom Envoy timeout. Defaults to 15s",
     )
     parser.add_argument(
+        "-n",
+        "--namespace",
+        default="",
+        help="Specify a suffix for the namespace (resulting in log-enabled-suffix)",
+    )
+    parser.add_argument(
         "--no-header", action="store_true", help="Do not add the Istio and ELK Stack components to the output file (useful for adding deployments to an already )"
     )
     parser.add_argument(
@@ -48,17 +55,19 @@ def parse_options():
         "--pod", help="Dumps the logs of the specified pod (to a file, if used with -o). Cannot be used with yRCA log output format.", type=str
     )
     parser.add_argument(
-        "--dump-all", help="Dump all the logs in the Elasticsearch instance (to a file, if used with -o). Cannot be used with yRCA log output format.", type=str)
+        "--dump-all", action="store_true",  help="Dump all the logs in the Elasticsearch instance (to a file, if used with -o). Cannot be used with yRCA log output format.")
     parser.add_argument(
         "-f", "--format", choices=['yrca', 'gelf', 'syslog'], default='yrca', help="Specify the format of the logs to be processed. Defaults to yrca."
         )
     return parser.parse_args()
 
-def inject(yaml_file, timeout="1m", no_header=False):
+def inject(yaml_file, timeout="1m", no_header=False, namespace_suffix=""):
     """
     Inject log analysis components into a YAML file.
     """
-
+    if namespace_suffix:
+        LOG_NAMESPACE = DEFAULT_LOG_NAMESPACE_PREFIX + namespace_suffix
+        
     try:
         manifests = load_manifests(
             [
@@ -166,8 +175,11 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
             "bool": {
                 "must": [
                     {"match": {"kubernetes.namespace": "log-enabled"}},
-                    {"match": {"kubernetes.pod.name": pod}},
-                ]
+                    {"match": {"kubernetes.pod.name.keyword": pod}},
+                ],
+                "must_not": [
+                {"match": {"kubernetes.container.name": "istio-proxy"}}
+            ]
             }
         }
 
@@ -178,7 +190,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
     try:
         response = es.search(index="logstash-*", query=query, scroll=scroll_time, size=size, sort="@timestamp:asc")
     except Exception as e:
-        print("Error while connecting to Elasticsearch instance")
+        print("Error while connecting to Elasticsearch instance. The error is specified below.")
         print(e)
         return None
 
@@ -199,8 +211,11 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
                 short_message = hit["_source"]["message"].split("\n")[0]
                 full_message = hit["_source"]["message"]
                 timestamp = hit["_source"]["@timestamp"]
+                namespace_name = hit["_source"]["kubernetes"]["namespace"]
+                pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
+                container_name = hit["_source"]["kubernetes"]["container"]["name"]
                 level = "INFO"
-                formatted_log = f"version: {version}, host: {host}, short_message: {short_message}, full_message: {full_message}, timestamp: {timestamp}, level: {level}"
+                formatted_log = f'{{"version": "{version}", "host": "{host}", "short_message": "{short_message}", "full_message": "{full_message}", "timestamp": "{timestamp}", "level": "{level}", "_namespace_name": "{namespace_name}", "_pod_name": "{pod_name}", "_container_name": "{container_name}"}}'
                 logs.append(formatted_log)
 
             elif format == "syslog":
@@ -209,10 +224,8 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
                 hostname = hit["_source"]["host"]["name"]
                 app_name = hit["_source"]["kubernetes"]["container"]["name"]
                 procid = hit["_source"]["kubernetes"]["pod"]["name"]
-                msgid = "-"
-                structured_data = "-"
                 msg = hit["_source"]["message"]
-                formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msgid} {structured_data} {msg}"
+                formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msg}"
                 logs.append(formatted_log)
 
         # Fetch the next batch of logs using the scroll API
@@ -236,6 +249,8 @@ def main():
     if args.connect:
         output = connect_elasticsearch(args.connect, args.port, args.dump_all, args.format, args.pod)
 
+    if not output:
+        return
     if args.output:
         with open(args.output, "w", encoding="utf-8") as stream:
             if isinstance(output, list):
