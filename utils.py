@@ -49,3 +49,19 @@ def is_valid_k8s_namespace(namespace_name):
     pattern = re.compile('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
     
     return bool(pattern.match(namespace_name))
+
+def is_valid_timeout(timeout_str):
+    """
+    Validates if the provided timeout string matches the Kubernetes timeout format.
+
+    Args:
+    - timeout_str (str): The timeout string to be checked.
+
+    Returns:
+    - bool: True if the timeout format is valid, otherwise False.
+    """
+    
+    # Regular expression pattern to match valid timeout strings
+    pattern = re.compile('^[0-9]+[hms]$')
+    
+    return bool(pattern.match(timeout_str))

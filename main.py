@@ -7,7 +7,7 @@ import argparse
 import yaml
 from elasticsearch import Elasticsearch
 from yrca import yrca_process_logs
-from utils import load_manifests, build_merged_text, is_valid_k8s_namespace
+from utils import load_manifests, build_merged_text, is_valid_k8s_namespace, is_valid_timeout
 
 DEFAULT_NAMESPACE = "log-enabled"
 
@@ -70,6 +70,10 @@ def inject(yaml_file, timeout="15s", no_header=False, custom_namespace_suffix=""
     
     if not is_valid_k8s_namespace(final_namespace):
         print(f"Error: The namespace {final_namespace} is not valid. Please specify a valid namespace name.")
+        return None
+    
+    if not is_valid_timeout(timeout):
+        print(f"Error: The timeout {timeout} is not valid. Please specify a valid timeout.")
         return None
         
     try:
@@ -172,7 +176,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
     query = {
         "bool": {
             "must": [
-                {"match": {"kubernetes.namespace": final_namespace}},
+                {"term": {"kubernetes.namespace.keyword": final_namespace}},
                 {"match": {"kubernetes.container.name": "istio-proxy"}},
                 {"match": {"message": "start_time"}}
             ]
@@ -182,7 +186,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         query = {
             "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace": final_namespace}},
+                    {"term": {"kubernetes.namespace.keyword": final_namespace}},
                 ]
             }
         }
@@ -190,7 +194,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         query = {
             "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace": final_namespace}},
+                    {"term": {"kubernetes.namespace.keyword": final_namespace}},
                     {"match": {"kubernetes.pod.name.keyword": pod}},
                 ],
                 "must_not": [
