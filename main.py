@@ -9,8 +9,7 @@ from elasticsearch import Elasticsearch
 from yrca import yrca_process_logs
 from utils import load_manifests, build_merged_text
 
-LOG_NAMESPACE = "log-enabled"
-DEFAULT_LOG_NAMESPACE_PREFIX = "log-enabled-"
+DEFAULT_NAMESPACE = "log-enabled"
 
 
 
@@ -43,7 +42,7 @@ def parse_options():
         help="Specify a suffix for the namespace (resulting in log-enabled-suffix)",
     )
     parser.add_argument(
-        "--no-header", action="store_true", help="Do not add the Istio and ELK Stack components to the output file (useful for adding deployments to an already )"
+        "--no-header", action="store_true", help="Do not add the Istio and ELK Stack components to the output file (useful for adding deployments to an already running main deployment file)"
     )
     parser.add_argument(
         "-c", "--connect", help="Connect to the specified Elasticsearch instance", type=str
@@ -61,12 +60,13 @@ def parse_options():
         )
     return parser.parse_args()
 
-def inject(yaml_file, timeout="1m", no_header=False, namespace_suffix=""):
+def inject(yaml_file, timeout="1m", no_header=False, custom_namespace_suffix=""):
     """
     Inject log analysis components into a YAML file.
     """
-    if namespace_suffix:
-        LOG_NAMESPACE = DEFAULT_LOG_NAMESPACE_PREFIX + namespace_suffix
+    final_namespace = DEFAULT_NAMESPACE
+    if custom_namespace_suffix:
+        final_namespace = DEFAULT_NAMESPACE + "-" + custom_namespace_suffix
         
     try:
         manifests = load_manifests(
@@ -80,16 +80,23 @@ def inject(yaml_file, timeout="1m", no_header=False, namespace_suffix=""):
 
         virtual_services = []
         docs_text = []
+        
+        namespace_template = yaml.safe_load(manifests["manifest/namespace_manifest.yaml"])
+        namespace_template["metadata"]["name"] = final_namespace
+        docs_text.append(yaml.dump(namespace_template, default_flow_style=False))
+                
+
 
         for doc in yaml.safe_load_all(manifests[yaml_file]):
             if doc:
-                doc = replace_namespace(doc)
+                doc = replace_namespace(doc, final_namespace)
                 if doc["kind"].lower() == "service":
                     service_name = doc["metadata"]["name"]
-                    virtual_service = create_virtual_service(service_name, timeout)
+                    virtual_service = create_virtual_service(service_name, timeout, final_namespace)
                     virtual_services.append(virtual_service)
                 docs_text.append(yaml.dump(doc, default_flow_style=False))
 
+        
         virtual_services_text = [
             yaml.dump(vs, default_flow_style=False) for vs in virtual_services
         ]
@@ -101,7 +108,6 @@ def inject(yaml_file, timeout="1m", no_header=False, namespace_suffix=""):
                 [
                     manifests["manifest/istio_manifest.yaml"],
                     manifests["manifest/elk_manifest.yaml"],
-                    manifests["manifest/namespace_manifest.yaml"],
                 ]
                 + docs_text
                 + virtual_services_text
@@ -112,24 +118,24 @@ def inject(yaml_file, timeout="1m", no_header=False, namespace_suffix=""):
     return merged_text
 
 
-def replace_namespace(yaml_section):
+def replace_namespace(yaml_section, namespace):
     """
     Replace or set the namespace in the YAML section.
     """
     if "metadata" not in yaml_section:
         yaml_section["metadata"] = {}
-    yaml_section["metadata"]["namespace"] = LOG_NAMESPACE
+    yaml_section["metadata"]["namespace"] = namespace
     return yaml_section
 
 
-def create_virtual_service(service_name, timeout):
+def create_virtual_service(service_name, timeout, namespace):
     """
     Create an Istio VirtualService configuration for a given service.
     """
     return {
         "apiVersion": "networking.istio.io/v1alpha3",
         "kind": "VirtualService",
-        "metadata": {"name": service_name, "namespace": LOG_NAMESPACE},
+        "metadata": {"name": service_name, "namespace": namespace},
         "spec": {
             "hosts": [service_name],
             "http": [
@@ -139,15 +145,19 @@ def create_virtual_service(service_name, timeout):
     }
 
 
-def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format="yrca", pod=None):
+def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format="yrca", pod=None, custom_namespace_suffix=""):
 
     if format == "yrca" and (dump_all or pod):
-        print("yRCA only requires the dump of Envoy proxies, so it cannot be used with --dump-all or --pod")
+        print("The yRCA format (the default) only requires the dump of Envoy proxies, so it cannot be used with --dump-all or --pod. Specify a custom format with -f.")
         return None
     
     if dump_all and pod:
-        print("Cannot use --dump-all and --pod together")
+        print("Cannot use --dump-all and --pod together.")
         return None
+    
+    final_namespace = DEFAULT_NAMESPACE
+    if custom_namespace_suffix:
+        final_namespace = DEFAULT_NAMESPACE + "-" + custom_namespace_suffix
 
     # Connect to the Elasticsearch instance
     es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
@@ -156,7 +166,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
     query = {
         "bool": {
             "must": [
-                {"match": {"kubernetes.namespace.keyword": "log-enabled"}},
+                {"match": {"kubernetes.namespace": final_namespace}},
                 {"match": {"kubernetes.container.name": "istio-proxy"}},
                 {"match": {"message": "start_time"}}
             ]
@@ -245,9 +255,9 @@ def main():
     """
     args = parse_options()
     if args.inject:
-        output = inject(args.inject, args.timeout, args.no_header)
+        output = inject(args.inject, args.timeout, args.no_header, args.namespace)
     if args.connect:
-        output = connect_elasticsearch(args.connect, args.port, args.dump_all, args.format, args.pod)
+        output = connect_elasticsearch(args.connect, args.port, args.dump_all, args.format, args.pod, args.namespace)
 
     if not output:
         return

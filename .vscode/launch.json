@@ -44,6 +44,14 @@
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
          "args": ["-c", "localhost", "-p", "${input:es_port}", "--dump-all", "-f", "gelf"]
+      },
+      {
+         "name": "Python: DB Connection - chaosecho",
+         "type": "python",
+         "request": "launch",
+         "program": "${workspaceFolder}/main.py",
+         "console": "integratedTerminal",
+         "args": ["-c", "localhost", "-p", "${input:es_port}", "-n", "chaosecho"]
       }
    ],
    "inputs": [
@@ -51,7 +59,7 @@
           "id": "es_port",
           "type": "promptString",
           "description": "Enter the Minikube port number",
-          "default": "63841"  // optional default value
+          "default": "57416"  // optional default value
       }
    ]
 }
