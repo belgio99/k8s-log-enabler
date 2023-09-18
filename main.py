@@ -7,7 +7,7 @@ import argparse
 import yaml
 from elasticsearch import Elasticsearch
 from yrca import yrca_process_logs
-from utils import load_manifests, build_merged_text
+from utils import load_manifests, build_merged_text, is_valid_k8s_namespace
 
 DEFAULT_NAMESPACE = "log-enabled"
 
@@ -60,13 +60,17 @@ def parse_options():
         )
     return parser.parse_args()
 
-def inject(yaml_file, timeout="1m", no_header=False, custom_namespace_suffix=""):
+def inject(yaml_file, timeout="15s", no_header=False, custom_namespace_suffix=""):
     """
     Inject log analysis components into a YAML file.
     """
     final_namespace = DEFAULT_NAMESPACE
     if custom_namespace_suffix:
         final_namespace = DEFAULT_NAMESPACE + "-" + custom_namespace_suffix
+    
+    if not is_valid_k8s_namespace(final_namespace):
+        print(f"Error: The namespace {final_namespace} is not valid. Please specify a valid namespace name.")
+        return None
         
     try:
         manifests = load_manifests(
@@ -77,43 +81,41 @@ def inject(yaml_file, timeout="1m", no_header=False, custom_namespace_suffix="")
                 "manifest/elk_manifest.yaml",
             ]
         )
-
-        virtual_services = []
-        docs_text = []
-        
-        namespace_template = yaml.safe_load(manifests["manifest/namespace_manifest.yaml"])
-        namespace_template["metadata"]["name"] = final_namespace
-        docs_text.append(yaml.dump(namespace_template, default_flow_style=False))
-                
+    except FileNotFoundError:
+        print("Error: A necessary file has not been found. Ensure the file paths are correct and try again.")
+        return None
 
 
-        for doc in yaml.safe_load_all(manifests[yaml_file]):
-            if doc:
-                doc = replace_namespace(doc, final_namespace)
-                if doc["kind"].lower() == "service":
-                    service_name = doc["metadata"]["name"]
-                    virtual_service = create_virtual_service(service_name, timeout, final_namespace)
-                    virtual_services.append(virtual_service)
-                docs_text.append(yaml.dump(doc, default_flow_style=False))
-
-        
-        virtual_services_text = [
-            yaml.dump(vs, default_flow_style=False) for vs in virtual_services
-        ]
-        if no_header:
-            merged_text = build_merged_text(docs_text + virtual_services_text)
-
-        else:
-            merged_text = build_merged_text(
-                [
-                    manifests["manifest/istio_manifest.yaml"],
-                    manifests["manifest/elk_manifest.yaml"],
-                ]
-                + docs_text
-                + virtual_services_text
-            )
-    except FileNotFoundError as exc:
-        print(exc)
+    virtual_services = []
+    docs_text = []
+    
+    namespace_template = yaml.safe_load(manifests["manifest/namespace_manifest.yaml"])
+    namespace_template["metadata"]["name"] = final_namespace
+    docs_text.append(yaml.dump(namespace_template, default_flow_style=False))
+            
+    for doc in yaml.safe_load_all(manifests[yaml_file]):
+        if doc:
+            doc = replace_namespace(doc, final_namespace)
+            if doc["kind"].lower() == "service":
+                service_name = doc["metadata"]["name"]
+                virtual_service = create_virtual_service(service_name, timeout, final_namespace)
+                virtual_services.append(virtual_service)
+            docs_text.append(yaml.dump(doc, default_flow_style=False))
+    
+    virtual_services_text = [
+        yaml.dump(vs, default_flow_style=False) for vs in virtual_services
+    ]
+    if no_header:
+        merged_text = build_merged_text(docs_text + virtual_services_text)
+    else:
+        merged_text = build_merged_text(
+            [
+                manifests["manifest/istio_manifest.yaml"],
+                manifests["manifest/elk_manifest.yaml"],
+            ]
+            + docs_text
+            + virtual_services_text
+        )
 
     return merged_text
 
@@ -159,6 +161,10 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
     if custom_namespace_suffix:
         final_namespace = DEFAULT_NAMESPACE + "-" + custom_namespace_suffix
 
+    if not is_valid_k8s_namespace(final_namespace):
+        print(f"Error: The namespace {final_namespace} is not valid. Please specify a valid namespace name.")
+        return None
+
     # Connect to the Elasticsearch instance
     es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
 
@@ -176,7 +182,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         query = {
             "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace": "log-enabled"}},
+                    {"match": {"kubernetes.namespace": final_namespace}},
                 ]
             }
         }
@@ -184,7 +190,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         query = {
             "bool": {
                 "must": [
-                    {"match": {"kubernetes.namespace": "log-enabled"}},
+                    {"match": {"kubernetes.namespace": final_namespace}},
                     {"match": {"kubernetes.pod.name.keyword": pod}},
                 ],
                 "must_not": [
@@ -254,6 +260,10 @@ def main():
     Main function to execute the script.
     """
     args = parse_options()
+    if args.inject and args.connect:
+        print("Cannot use both -i and -c together.")
+        return
+    output = None
     if args.inject:
         output = inject(args.inject, args.timeout, args.no_header, args.namespace)
     if args.connect:
