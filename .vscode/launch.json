@@ -46,12 +46,12 @@
          "args": ["-c", "localhost", "-p", "${input:es_port}", "--dump-all", "-f", "gelf"]
       },
       {
-         "name": "Python: DB Connection - chaosecho",
+         "name": "Python: DB Connection - bookinfo",
          "type": "python",
          "request": "launch",
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
-         "args": ["-c", "localhost", "-p", "${input:es_port}", "-n", "chaosecho"]
+         "args": ["-c", "localhost", "-p", "${input:es_port}", "-n", "bookinfo"]
       }
    ],
    "inputs": [
@@ -59,7 +59,7 @@
           "id": "es_port",
           "type": "promptString",
           "description": "Enter the Minikube port number",
-          "default": "57416"  // optional default value
+          "default": "62643"  // optional default value
       }
    ]
 }

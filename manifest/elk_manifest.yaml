@@ -290,6 +290,20 @@ data:
           matchers:
           - logs_path:
               logs_path: "/var/log/containers/"
+      - script:
+          lang: javascript
+          id: set_severity
+          source: >
+            function process(event) {
+                var code = event.Get("response_code");
+                if (code >= 500) {
+                    event.Put("severity", "ERROR");
+                } else if (code >= 400) {
+                    event.Put("severity", "WARN");
+                } else {
+                    event.Put("severity", "INFO");
+                }
+            }
       - drop_event.when.not.or:
         - contains.kubernetes.namespace: "log-enabled"
     output.logstash:

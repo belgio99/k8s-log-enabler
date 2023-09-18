@@ -5,8 +5,9 @@ logs = []
 
 def produce_yrca_logs(requestJson, responseJson):
     """Process and print logs based on request and response data."""
-    
+
     responseCode = requestJson.get("response_code", None)
+    severity = get_severity(responseCode) if responseCode else "INFO"
     requestID = requestJson.get("x-request-id", "")
     requestServiceName = requestJson.get("pod_name", "")
     requestStartTime = requestJson.get("start_time", "")
@@ -18,32 +19,45 @@ def produce_yrca_logs(requestJson, responseJson):
         responseServiceName = requestJson.get("authority", "")
 
     # Define common print pattern
-    def append_log(time, service_name, action, target_service, req_id):
-        logs.append(f"{time} - INFO - {service_name} - {action} {target_service} (request_id: {req_id})")
+    def append_log(time, service_name, action, target_service, severity, req_id):
+        event_msg = f"{action} {target_service} (request_id: {req_id})"
+        timestamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+        formatted_time = datetime.strptime(time, timestamp_format).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
+        log_entry = {
+            "severity": severity,
+            "container_name": service_name,
+            "event": event_msg,
+            "message": f"{formatted_time} {severity} {service_name} --- {event_msg}",
+            "timestamp": formatted_time,
+            "@timestamp": time
+        }
+        logs.append(log_entry)
+
 
     if not responseJson:
-        append_log(requestStartTime, requestServiceName, "Sending request to", responseServiceName, requestID)
+        append_log(requestStartTime, requestServiceName, "Sending message to", responseServiceName, severity, requestID)
         requestDateTime = datetime.strptime(requestStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta = timedelta(milliseconds=requestJson["duration"])
         requestEndTime = (requestDateTime + delta).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
-        append_log(requestEndTime, requestServiceName, "Failing to contact", requestJson["authority"], requestID)
+        append_log(requestEndTime, requestServiceName, "Failing to contact", requestJson["authority"], severity, requestID)
 
     else:
-        append_log(requestStartTime, requestServiceName, "Sending request to", responseServiceName, requestID)
-        append_log(responseStartTime, responseServiceName, "Reading request from", requestServiceName, requestID)
+        append_log(requestStartTime, requestServiceName, "Sending message to", responseServiceName, severity, requestID)
+        append_log(responseStartTime, responseServiceName, "Received POST request from", requestServiceName, severity, requestID)
         responseDateTime = datetime.strptime(responseStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta1 = timedelta(milliseconds=responseJson["duration"])
         responseEndTime = (responseDateTime + delta1).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
-        append_log(responseEndTime, responseServiceName, "Answering response to", requestServiceName, requestID)
+        append_log(responseEndTime, responseServiceName, "Answered to POST request from", requestServiceName, severity, requestID)
         requestDateTime = datetime.strptime(requestStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta2 = timedelta(milliseconds=requestJson["duration"])
         requestEndTime = (requestDateTime + delta2).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
-        status_msg = "Received response OK from" if responseCode == 200 else "Received response ERROR from"
-        append_log(requestEndTime, requestServiceName, status_msg, responseServiceName, requestID)
+        status_msg = "Received response OK from" if responseCode == 200 else "Error response "
+        append_log(requestEndTime, requestServiceName, status_msg, responseServiceName, severity, requestID)
 
 def yrca_process_logs(log_lines):
     """Process the provided list of log lines."""
-    
+
     ToBeProcessed = {}
 
     for line in log_lines:
@@ -80,5 +94,15 @@ def yrca_process_logs(log_lines):
                 ToBeProcessed[key] = jsonLog
 
     return logs
+
+def get_severity(response_code):
+    """Deduce severity based on the response code."""
+    if response_code >= 500:
+        return "ERROR"
+    elif response_code >= 400:
+        return "WARN"
+    else:
+        return "INFO"
+
 
 __all__ = ['yrca_process_logs']

@@ -5,9 +5,11 @@ It does so by injecting the log analysis components into the input file.
 
 import argparse
 import yaml
+import json
 from elasticsearch import Elasticsearch
 from yrca import yrca_process_logs
 from utils import load_manifests, build_merged_text, is_valid_k8s_namespace, is_valid_timeout
+from datetime import datetime
 
 DEFAULT_NAMESPACE = "log-enabled"
 
@@ -151,6 +153,27 @@ def create_virtual_service(service_name, timeout, namespace):
     }
 
 
+def retrieve_logs(es, query, scroll_time="1m", size=10000):
+    """
+    Retrieve logs from Elasticsearch based on the provided query.
+    """
+    logs = []
+
+    try:
+        response = es.search(index="logstash-*", query=query, scroll=scroll_time, size=size, sort="@timestamp:asc")
+        while len(response['hits']['hits']):
+            logs.extend(response["hits"]["hits"])
+            response = es.scroll(scroll_id=response['_scroll_id'], scroll=scroll_time)
+        
+        es.clear_scroll(scroll_id=response['_scroll_id'])
+    except Exception as e:
+        print("Error while retrieving logs from Elasticsearch instance. The error is specified below.")
+        print(e)
+        return []
+
+    return logs
+
+
 def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format="yrca", pod=None, custom_namespace_suffix=""):
 
     if format == "yrca" and (dump_all or pod):
@@ -173,7 +196,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
     es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
 
     # Define the query
-    query = {
+    envoy_proxy_query = {
         "bool": {
             "must": [
                 {"term": {"kubernetes.namespace.keyword": final_namespace}},
@@ -182,81 +205,90 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
             ]
         }
     }
-    if dump_all:
-        query = {
-            "bool": {
-                "must": [
-                    {"term": {"kubernetes.namespace.keyword": final_namespace}},
-                ]
-            }
-        }
-    elif pod:
-        query = {
-            "bool": {
-                "must": [
-                    {"term": {"kubernetes.namespace.keyword": final_namespace}},
-                    {"match": {"kubernetes.pod.name.keyword": pod}},
-                ],
-                "must_not": [
-                {"match": {"kubernetes.container.name": "istio-proxy"}}
+    dump_all_query = {
+        "bool": {
+            "must": [
+                {"term": {"kubernetes.namespace.keyword": final_namespace}},
+            ],
+            "must_not": [
+            {"match": {"kubernetes.container.name": "istio-proxy"}}
             ]
-            }
         }
-
-    # Use the scroll API
-    scroll_time = "1m"
-    size = 10000
-
-    try:
-        response = es.search(index="logstash-*", query=query, scroll=scroll_time, size=size, sort="@timestamp:asc")
-    except Exception as e:
-        print("Error while connecting to Elasticsearch instance. The error is specified below.")
-        print(e)
-        return None
+    }
+    pod_query = {
+        "bool": {
+            "must": [
+                {"term": {"kubernetes.namespace.keyword": final_namespace}},
+                {"match": {"kubernetes.pod.name.keyword": pod}},
+            ],
+            "must_not": [
+            {"match": {"kubernetes.container.name": "istio-proxy"}}
+        ]
+        }
+    }
 
     logs = []
 
     # While there are logs to fetch, keep fetching
-    while len(response['hits']['hits']):
-        for hit in response["hits"]["hits"]:
-            if format == "yrca":
-                pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
-                log_message = hit["_source"]["message"]
-                formatted_log = f"{pod_name} {log_message}"
-                logs.append(formatted_log)
 
-            elif format == "gelf":
-                version = "1.1"
-                host = hit["_source"]["host"]["name"]
-                short_message = hit["_source"]["message"].split("\n")[0]
-                full_message = hit["_source"]["message"]
-                timestamp = hit["_source"]["@timestamp"]
-                namespace_name = hit["_source"]["kubernetes"]["namespace"]
-                pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
-                container_name = hit["_source"]["kubernetes"]["container"]["name"]
-                level = "INFO"
-                formatted_log = f'{{"version": "{version}", "host": "{host}", "short_message": "{short_message}", "full_message": "{full_message}", "timestamp": "{timestamp}", "level": "{level}", "_namespace_name": "{namespace_name}", "_pod_name": "{pod_name}", "_container_name": "{container_name}"}}'
-                logs.append(formatted_log)
-
-            elif format == "syslog":
-                priority = "<134>"
-                timestamp = hit["_source"]["@timestamp"]
-                hostname = hit["_source"]["host"]["name"]
-                app_name = hit["_source"]["kubernetes"]["container"]["name"]
-                procid = hit["_source"]["kubernetes"]["pod"]["name"]
-                msg = hit["_source"]["message"]
-                formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msg}"
-                logs.append(formatted_log)
-
-        # Fetch the next batch of logs using the scroll API
-        response = es.scroll(scroll_id=response['_scroll_id'], scroll=scroll_time)
-    
-    es.clear_scroll(scroll_id=response['_scroll_id'])
-
-    # Post-process logs for yrca
     if format == "yrca":
-        logs = yrca_process_logs(logs)
+        response = retrieve_logs(es, envoy_proxy_query)
+        yrca_logs = []
+        for hit in response:
+            pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
+            log_message = hit["_source"]["message"]
+            formatted_log = f"{pod_name} {log_message}"
+            yrca_logs.append(formatted_log)
 
+        yrca_final_logs = yrca_process_logs(yrca_logs)
+        response_dump_all = retrieve_logs(es, dump_all_query)
+
+        logs_dump_all = [
+            {
+                "severity": "INFO",
+                "container_name": hit["_source"]["kubernetes"]["pod"]["name"],
+                "event": hit["_source"]["message"].split("\n")[0],
+                "message": hit["_source"]["message"],
+                "timestamp": datetime.strptime(hit["_source"]["@timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+                "@timestamp": hit["_source"]["@timestamp"]
+            }
+            for hit in response_dump_all
+        ]
+        return yrca_final_logs + logs_dump_all
+
+
+
+
+    if dump_all:
+        query = dump_all_query
+    elif pod:
+        query = pod_query
+
+    response = retrieve_logs(es, query)
+    
+    if format == "gelf":
+        for hit in response:
+            version = "1.1"
+            host = hit["_source"]["host"]["name"]
+            short_message = hit["_source"]["message"].split("\n")[0]
+            full_message = hit["_source"]["message"]
+            timestamp = hit["_source"]["@timestamp"]
+            namespace_name = hit["_source"]["kubernetes"]["namespace"]
+            pod_name = hit["_source"]["kubernetes"]["pod"]["name"]
+            container_name = hit["_source"]["kubernetes"]["container"]["name"]
+            level = "INFO"
+            formatted_log = f'{{"version": "{version}", "host": "{host}", "short_message": "{short_message}", "full_message": "{full_message}", "timestamp": "{timestamp}", "level": "{level}", "_namespace_name": "{namespace_name}", "_pod_name": "{pod_name}", "_container_name": "{container_name}"}}'
+            logs.append(formatted_log)
+    elif format == "syslog":
+        for hit in response:
+            priority = "<134>"
+            timestamp = hit["_source"]["@timestamp"]
+            hostname = hit["_source"]["host"]["name"]
+            app_name = hit["_source"]["kubernetes"]["container"]["name"]
+            procid = hit["_source"]["kubernetes"]["pod"]["name"]
+            msg = hit["_source"]["message"]
+            formatted_log = f"{priority}{timestamp} {hostname} {app_name} {procid} {msg}"
+            logs.append(formatted_log)
     return logs
 
 def main():
@@ -278,19 +310,18 @@ def main():
     if args.output:
         with open(args.output, "w", encoding="utf-8") as stream:
             if isinstance(output, list):
-                stream.write("\n".join(output))
+                stream.write("\n".join(json.dumps(d) for d in output))
             else:
                 stream.write(output)
             print(f"Output file written to {args.output}")
     else:
         if isinstance(output, list):
-            print("\n".join(output))
+            print("\n".join(json.dumps(d) for d in output))
         else:
             print(output)
-   
-
-
-
 
 if __name__ == "__main__":
     main()
+
+
+

@@ -56,7 +56,7 @@ spec:
         - name: P_FAIL
           value: "75"
         - name: P_CRASH
-          value: "50"
+          value: "25"
         ports:
         - containerPort: 80
 
