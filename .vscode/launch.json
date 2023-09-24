@@ -51,7 +51,7 @@
          "request": "launch",
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
-         "args": ["-c", "localhost", "-p", "${input:es_port}", "-n", "bookinfo"]
+         "args": ["-c", "localhost", "-p", "${input:es_port}", "-n", "chaosecho"]
       }
    ],
    "inputs": [
@@ -59,7 +59,7 @@
           "id": "es_port",
           "type": "promptString",
           "description": "Enter the Minikube port number",
-          "default": "62643"  // optional default value
+          "default": "61589"  // optional default value
       }
    ]
 }

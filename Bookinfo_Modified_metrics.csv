@@ -1,0 +1,14 @@
+Running tests simulating 1 users...
+Running 1m test @ http://127.0.0.1:54815/productpage?u=normal
+  1 threads and 1 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    53.26ms   19.55ms 353.01ms   98.11%
+    Req/Sec    19.16      2.82    30.00     92.86%
+  Latency Distribution
+     50%   51.20ms
+     75%   52.34ms
+     90%   53.82ms
+     99%  123.76ms
+  1154 requests in 1.00m, 6.71MB read
+Requests/sec:     19.23
+Transfer/sec:    114.49KB

@@ -245,8 +245,8 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
 
         logs_dump_all = [
             {
-                "severity": "INFO",
-                "container_name": hit["_source"]["kubernetes"]["pod"]["name"],
+                "severity": hit["_source"]["severity"] if "severity" in hit["_source"] else "INFO",
+                "container_name": "k8s_" + hit["_source"]["kubernetes"]["pod"]["name"].split("-")[0],
                 "event": hit["_source"]["message"].split("\n")[0],
                 "message": hit["_source"]["message"],
                 "timestamp": datetime.strptime(hit["_source"]["@timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
@@ -270,7 +270,7 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         for hit in response:
             version = "1.1"
             host = hit["_source"]["host"]["name"]
-            short_message = hit["_source"]["message"].split("\n")[0]
+            short_message = hit["_source"]["message"]
             full_message = hit["_source"]["message"]
             timestamp = hit["_source"]["@timestamp"]
             namespace_name = hit["_source"]["kubernetes"]["namespace"]
