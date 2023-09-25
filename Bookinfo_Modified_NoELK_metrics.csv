@@ -1,14 +1,18 @@
-Running tests simulating 1 users...
-Running 1m test @ http://127.0.0.1:54851/productpage?u=normal
-  1 threads and 1 connections
+Running tests simulating 8 users...
+Running 1m test @ http://127.0.0.1:55386/productpage?u=normal
+  8 threads and 8 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    40.12ms   30.12ms 359.73ms   80.34%
-    Req/Sec    26.09      7.63    50.00     82.88%
+    Latency    65.55ms   39.11ms 595.57ms   83.45%
+    Req/Sec    15.72      6.96    50.00     91.63%
   Latency Distribution
-     50%   50.32ms
-     75%   52.17ms
-     90%   53.68ms
-     99%  153.06ms
-  1570 requests in 1.00m, 9.15MB read
-Requests/sec:     26.15
-Transfer/sec:    156.09KB
+     50%   59.88ms
+     75%   76.51ms
+     90%  100.87ms
+     99%  156.10ms
+  7370 requests in 0.98m, 42.88MB read
+  Socket errors: connect 0, read 4215, write 567, timeout 0
+Requests/sec:    125.79
+Transfer/sec:    749.48KB
+Running tests simulating 25 users...
+Running tests simulating 50 users...
+Running tests simulating 200 users...

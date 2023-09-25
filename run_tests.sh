@@ -42,9 +42,9 @@ function run_tests() {
     SERVICE_URL="${SERVICE_URL}${SERVICE_SUBLINK}"
 
     # Run the test for different user loads
-    for USERS in 1; do
+    for USERS in 8 25 50 200; do
         echo "Running tests simulating $USERS users..." >> $OUTPUT_FILE
-        wrk -t 1 -c$USERS -d60s $SERVICE_URL --latency >> $OUTPUT_FILE
+        wrk -t 8 -c$USERS -d60s $SERVICE_URL --latency >> $OUTPUT_FILE
     done
 
     echo "Writing performance metrics to $OUTPUT_FILE..."

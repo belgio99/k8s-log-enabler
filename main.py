@@ -263,6 +263,8 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         query = dump_all_query
     elif pod:
         query = pod_query
+    else:
+        query = envoy_proxy_query
 
     response = retrieve_logs(es, query)
     

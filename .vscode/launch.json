@@ -59,7 +59,7 @@
           "id": "es_port",
           "type": "promptString",
           "description": "Enter the Minikube port number",
-          "default": "61589"  // optional default value
+          "default": "60936"  // optional default value
       }
    ]
 }

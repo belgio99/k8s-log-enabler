@@ -3087,1063 +3087,1124 @@ kind: Namespace
 metadata:
   labels:
     istio.io/rev: logrevision
-  name: log-enabled-onlineboutique
+  name: log-enabled-sockshop
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sock-shop
+  namespace: log-enabled-sockshop
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: emailservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: emailservice
-  template:
-    metadata:
-      labels:
-        app: emailservice
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '8080'
-        - name: DISABLE_PROFILER
-          value: '1'
-        image: gcr.io/google-samples/microservices-demo/emailservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 8080
-          periodSeconds: 5
-        name: server
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          grpc:
-            port: 8080
-          periodSeconds: 5
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
-          requests:
-            cpu: 100m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: emailservice
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: grpc
-    port: 5000
-    targetPort: 8080
-  selector:
-    app: emailservice
-  type: ClusterIP
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: checkoutservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: checkoutservice
-  template:
-    metadata:
-      labels:
-        app: checkoutservice
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '5050'
-        - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: productcatalogservice:3550
-        - name: SHIPPING_SERVICE_ADDR
-          value: shippingservice:50051
-        - name: PAYMENT_SERVICE_ADDR
-          value: paymentservice:50051
-        - name: EMAIL_SERVICE_ADDR
-          value: emailservice:5000
-        - name: CURRENCY_SERVICE_ADDR
-          value: currencyservice:7000
-        - name: CART_SERVICE_ADDR
-          value: cartservice:7070
-        image: gcr.io/google-samples/microservices-demo/checkoutservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 5050
-        name: server
-        ports:
-        - containerPort: 5050
-        readinessProbe:
-          grpc:
-            port: 5050
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
-          requests:
-            cpu: 100m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: checkoutservice
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: grpc
-    port: 5050
-    targetPort: 5050
-  selector:
-    app: checkoutservice
-  type: ClusterIP
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: recommendationservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: recommendationservice
-  template:
-    metadata:
-      labels:
-        app: recommendationservice
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '8080'
-        - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: productcatalogservice:3550
-        - name: DISABLE_PROFILER
-          value: '1'
-        image: gcr.io/google-samples/microservices-demo/recommendationservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 8080
-          periodSeconds: 5
-        name: server
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          grpc:
-            port: 8080
-          periodSeconds: 5
-        resources:
-          limits:
-            cpu: 200m
-            memory: 450Mi
-          requests:
-            cpu: 100m
-            memory: 220Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: recommendationservice
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: grpc
-    port: 8080
-    targetPort: 8080
-  selector:
-    app: recommendationservice
-  type: ClusterIP
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  template:
-    metadata:
-      annotations:
-        sidecar.istio.io/rewriteAppHTTPProbers: 'true'
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '8080'
-        - name: PRODUCT_CATALOG_SERVICE_ADDR
-          value: productcatalogservice:3550
-        - name: CURRENCY_SERVICE_ADDR
-          value: currencyservice:7000
-        - name: CART_SERVICE_ADDR
-          value: cartservice:7070
-        - name: RECOMMENDATION_SERVICE_ADDR
-          value: recommendationservice:8080
-        - name: SHIPPING_SERVICE_ADDR
-          value: shippingservice:50051
-        - name: CHECKOUT_SERVICE_ADDR
-          value: checkoutservice:5050
-        - name: AD_SERVICE_ADDR
-          value: adservice:9555
-        - name: ENABLE_PROFILER
-          value: '0'
-        image: gcr.io/google-samples/microservices-demo/frontend:v0.8.0
-        livenessProbe:
-          httpGet:
-            httpHeaders:
-            - name: Cookie
-              value: shop_session-id=x-liveness-probe
-            path: /_healthz
-            port: 8080
-          initialDelaySeconds: 10
-        name: server
-        ports:
-        - containerPort: 8080
-        readinessProbe:
-          httpGet:
-            httpHeaders:
-            - name: Cookie
-              value: shop_session-id=x-readiness-probe
-            path: /_healthz
-            port: 8080
-          initialDelaySeconds: 10
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
-          requests:
-            cpu: 100m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-  selector:
-    app: frontend
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend-external
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-  selector:
-    app: frontend
-  type: LoadBalancer
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: paymentservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: paymentservice
-  template:
-    metadata:
-      labels:
-        app: paymentservice
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '50051'
-        - name: DISABLE_PROFILER
-          value: '1'
-        image: gcr.io/google-samples/microservices-demo/paymentservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 50051
-        name: server
-        ports:
-        - containerPort: 50051
-        readinessProbe:
-          grpc:
-            port: 50051
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
-          requests:
-            cpu: 100m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: paymentservice
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: grpc
-    port: 50051
-    targetPort: 50051
-  selector:
-    app: paymentservice
-  type: ClusterIP
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: productcatalogservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: productcatalogservice
-  template:
-    metadata:
-      labels:
-        app: productcatalogservice
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '3550'
-        - name: DISABLE_PROFILER
-          value: '1'
-        image: gcr.io/google-samples/microservices-demo/productcatalogservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 3550
-        name: server
-        ports:
-        - containerPort: 3550
-        readinessProbe:
-          grpc:
-            port: 3550
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
-          requests:
-            cpu: 100m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: productcatalogservice
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: grpc
-    port: 3550
-    targetPort: 3550
-  selector:
-    app: productcatalogservice
-  type: ClusterIP
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: cartservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: cartservice
-  template:
-    metadata:
-      labels:
-        app: cartservice
-    spec:
-      containers:
-      - env:
-        - name: REDIS_ADDR
-          value: redis-cart:6379
-        image: gcr.io/google-samples/microservices-demo/cartservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 7070
-          initialDelaySeconds: 15
-          periodSeconds: 10
-        name: server
-        ports:
-        - containerPort: 7070
-        readinessProbe:
-          grpc:
-            port: 7070
-          initialDelaySeconds: 15
-        resources:
-          limits:
-            cpu: 300m
-            memory: 128Mi
-          requests:
-            cpu: 200m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: cartservice
-  namespace: log-enabled-onlineboutique
-spec:
-  ports:
-  - name: grpc
-    port: 7070
-    targetPort: 7070
-  selector:
-    app: cartservice
-  type: ClusterIP
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: loadgenerator
-  namespace: log-enabled-onlineboutique
+  labels:
+    name: carts
+  name: carts
+  namespace: log-enabled-sockshop
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: loadgenerator
+      name: carts
   template:
     metadata:
-      annotations:
-        sidecar.istio.io/rewriteAppHTTPProbers: 'true'
       labels:
-        app: loadgenerator
+        name: carts
     spec:
       containers:
       - env:
-        - name: FRONTEND_ADDR
-          value: frontend:80
-        - name: USERS
-          value: '10'
-        image: gcr.io/google-samples/microservices-demo/loadgenerator:v0.8.0
-        name: main
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/carts:0.4.8
+        name: carts
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 300m
+            memory: 500Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: carts
+  name: carts
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: carts
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: carts-db
+  name: carts-db
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: carts-db
+  template:
+    metadata:
+      labels:
+        name: carts-db
+    spec:
+      containers:
+      - image: mongo
+        name: carts-db
+        ports:
+        - containerPort: 27017
+          name: mongo
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: carts-db
+  name: carts-db
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    name: carts-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: catalogue
+  name: catalogue
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: catalogue
+  template:
+    metadata:
+      labels:
+        name: catalogue
+    spec:
+      containers:
+      - args:
+        - -port=80
+        command:
+        - /app
+        image: weaveworksdemos/catalogue:0.3.5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: catalogue
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: catalogue
+  name: catalogue
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: catalogue
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: catalogue-db
+  name: catalogue-db
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: catalogue-db
+  template:
+    metadata:
+      labels:
+        name: catalogue-db
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: fake_password
+        - name: MYSQL_DATABASE
+          value: socksdb
+        image: weaveworksdemos/catalogue-db:0.3.0
+        name: catalogue-db
+        ports:
+        - containerPort: 3306
+          name: mysql
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: catalogue-db
+  name: catalogue-db
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    name: catalogue-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: front-end
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: front-end
+  template:
+    metadata:
+      labels:
+        name: front-end
+    spec:
+      containers:
+      - env:
+        - name: SESSION_REDIS
+          value: 'true'
+        image: weaveworksdemos/front-end:0.3.12
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8079
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: front-end
+        ports:
+        - containerPort: 8079
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8079
+          initialDelaySeconds: 30
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 300m
+            memory: 1000Mi
+          requests:
+            cpu: 100m
+            memory: 300Mi
+        securityContext:
+          capabilities:
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: front-end
+  name: front-end
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - nodePort: 30001
+    port: 80
+    targetPort: 8079
+  selector:
+    name: front-end
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: orders
+  name: orders
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: orders
+  template:
+    metadata:
+      labels:
+        name: orders
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/orders:0.4.7
+        name: orders
+        ports:
+        - containerPort: 80
         resources:
           limits:
             cpu: 500m
-            memory: 512Mi
+            memory: 500Mi
           requests:
+            cpu: 100m
+            memory: 300Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: orders
+  name: orders
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: orders
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: orders-db
+  name: orders-db
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: orders-db
+  template:
+    metadata:
+      labels:
+        name: orders-db
+    spec:
+      containers:
+      - image: mongo
+        name: orders-db
+        ports:
+        - containerPort: 27017
+          name: mongo
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: orders-db
+  name: orders-db
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    name: orders-db
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: payment
+  name: payment
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: payment
+  template:
+    metadata:
+      labels:
+        name: payment
+    spec:
+      containers:
+      - image: weaveworksdemos/payment:0.4.3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: payment
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 99m
+            memory: 100Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: payment
+  name: payment
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: payment
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: queue-master
+  name: queue-master
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: queue-master
+  template:
+    metadata:
+      labels:
+        name: queue-master
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/queue-master:0.3.1
+        name: queue-master
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
             cpu: 300m
-            memory: 256Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      initContainers:
-      - command:
-        - /bin/sh
-        - -exc
-        - "echo \"Init container pinging frontend: ${FRONTEND_ADDR}...\"\nSTATUSCODE=$(wget\
-          \ --server-response http://${FRONTEND_ADDR} 2>&1 | awk '/^  HTTP/{print\
-          \ $2}')\nif test $STATUSCODE -ne 200; then\n    echo \"Error: Could not\
-          \ reach frontend - Status code: ${STATUSCODE}\"\n    exit 1\nfi\n"
-        env:
-        - name: FRONTEND_ADDR
-          value: frontend:80
-        image: busybox:latest
-        name: frontend-check
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      restartPolicy: Always
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: currencyservice
-  namespace: log-enabled-onlineboutique
-spec:
-  selector:
-    matchLabels:
-      app: currencyservice
-  template:
-    metadata:
-      labels:
-        app: currencyservice
-    spec:
-      containers:
-      - env:
-        - name: PORT
-          value: '7000'
-        - name: DISABLE_PROFILER
-          value: '1'
-        image: gcr.io/google-samples/microservices-demo/currencyservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 7000
-        name: server
-        ports:
-        - containerPort: 7000
-          name: grpc
-        readinessProbe:
-          grpc:
-            port: 7000
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
+            memory: 500Mi
           requests:
             cpu: 100m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
+            memory: 300Mi
+      nodeSelector:
+        beta.kubernetes.io/os: linux
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: currencyservice
-  namespace: log-enabled-onlineboutique
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: queue-master
+  name: queue-master
+  namespace: log-enabled-sockshop
 spec:
   ports:
-  - name: grpc
-    port: 7000
-    targetPort: 7000
+  - port: 80
+    targetPort: 80
   selector:
-    app: currencyservice
-  type: ClusterIP
+    name: queue-master
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shippingservice
-  namespace: log-enabled-onlineboutique
+  labels:
+    name: rabbitmq
+  name: rabbitmq
+  namespace: log-enabled-sockshop
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: shippingservice
+      name: rabbitmq
   template:
     metadata:
+      annotations:
+        prometheus.io/scrape: 'false'
       labels:
-        app: shippingservice
+        name: rabbitmq
     spec:
       containers:
-      - env:
-        - name: PORT
-          value: '50051'
-        - name: DISABLE_PROFILER
-          value: '1'
-        image: gcr.io/google-samples/microservices-demo/shippingservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 50051
-        name: server
+      - image: rabbitmq:3.6.8-management
+        name: rabbitmq
         ports:
-        - containerPort: 50051
-        readinessProbe:
-          grpc:
-            port: 50051
-          periodSeconds: 5
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128Mi
-          requests:
-            cpu: 100m
-            memory: 64Mi
+        - containerPort: 15672
+          name: management
+        - containerPort: 5672
+          name: rabbitmq
         securityContext:
-          allowPrivilegeEscalation: false
           capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            - DAC_OVERRIDE
             drop:
-            - ALL
-          privileged: false
+            - all
           readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
+      - image: kbudde/rabbitmq-exporter
+        name: rabbitmq-exporter
+        ports:
+        - containerPort: 9090
+          name: exporter
+      nodeSelector:
+        beta.kubernetes.io/os: linux
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: shippingservice
-  namespace: log-enabled-onlineboutique
+  annotations:
+    prometheus.io/port: '9090'
+    prometheus.io/scrape: 'true'
+  labels:
+    name: rabbitmq
+  name: rabbitmq
+  namespace: log-enabled-sockshop
 spec:
   ports:
-  - name: grpc
-    port: 50051
-    targetPort: 50051
+  - name: rabbitmq
+    port: 5672
+    targetPort: 5672
+  - name: exporter
+    port: 9090
+    protocol: TCP
+    targetPort: exporter
   selector:
-    app: shippingservice
-  type: ClusterIP
+    name: rabbitmq
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: redis-cart
-  namespace: log-enabled-onlineboutique
+  labels:
+    name: session-db
+  name: session-db
+  namespace: log-enabled-sockshop
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: redis-cart
+      name: session-db
   template:
     metadata:
+      annotations:
+        prometheus.io.scrape: 'false'
       labels:
-        app: redis-cart
+        name: session-db
     spec:
       containers:
       - image: redis:alpine
-        livenessProbe:
-          periodSeconds: 5
-          tcpSocket:
-            port: 6379
-        name: redis
+        name: session-db
         ports:
         - containerPort: 6379
-        readinessProbe:
-          periodSeconds: 5
-          tcpSocket:
-            port: 6379
-        resources:
-          limits:
-            cpu: 125m
-            memory: 256Mi
-          requests:
-            cpu: 70m
-            memory: 200Mi
+          name: redis
         securityContext:
-          allowPrivilegeEscalation: false
           capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
             drop:
-            - ALL
-          privileged: false
+            - all
           readOnlyRootFilesystem: true
-        volumeMounts:
-        - mountPath: /data
-          name: redis-data
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      volumes:
-      - emptyDir: {}
-        name: redis-data
+      nodeSelector:
+        beta.kubernetes.io/os: linux
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-cart
-  namespace: log-enabled-onlineboutique
+  labels:
+    name: session-db
+  name: session-db
+  namespace: log-enabled-sockshop
 spec:
   ports:
-  - name: tcp-redis
-    port: 6379
+  - port: 6379
     targetPort: 6379
   selector:
-    app: redis-cart
-  type: ClusterIP
+    name: session-db
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: adservice
-  namespace: log-enabled-onlineboutique
+  labels:
+    name: shipping
+  name: shipping
+  namespace: log-enabled-sockshop
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      app: adservice
+      name: shipping
   template:
     metadata:
       labels:
-        app: adservice
+        name: shipping
     spec:
       containers:
       - env:
-        - name: PORT
-          value: '9555'
-        image: gcr.io/google-samples/microservices-demo/adservice:v0.8.0
-        livenessProbe:
-          grpc:
-            port: 9555
-          initialDelaySeconds: 20
-          periodSeconds: 15
-        name: server
+        - name: ZIPKIN
+          value: zipkin.jaeger.svc.cluster.local
+        - name: JAVA_OPTS
+          value: -Xms64m -Xmx128m -XX:+UseG1GC -Djava.security.egd=file:/dev/urandom
+            -Dspring.zipkin.enabled=false
+        image: weaveworksdemos/shipping:0.4.8
+        name: shipping
         ports:
-        - containerPort: 9555
-        readinessProbe:
-          grpc:
-            port: 9555
-          initialDelaySeconds: 20
-          periodSeconds: 15
+        - containerPort: 80
         resources:
           limits:
             cpu: 300m
-            memory: 300Mi
+            memory: 500Mi
           requests:
-            cpu: 200m
-            memory: 180Mi
+            cpu: 100m
+            memory: 300Mi
         securityContext:
-          allowPrivilegeEscalation: false
           capabilities:
+            add:
+            - NET_BIND_SERVICE
             drop:
-            - ALL
-          privileged: false
+            - all
           readOnlyRootFilesystem: true
-      securityContext:
-        fsGroup: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
-        runAsUser: 1000
-      serviceAccountName: default
-      terminationGracePeriodSeconds: 5
+          runAsNonRoot: true
+          runAsUser: 10001
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: adservice
-  namespace: log-enabled-onlineboutique
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: shipping
+  name: shipping
+  namespace: log-enabled-sockshop
 spec:
   ports:
-  - name: grpc
-    port: 9555
-    targetPort: 9555
+  - port: 80
+    targetPort: 80
   selector:
-    app: adservice
-  type: ClusterIP
+    name: shipping
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: user
+  name: user
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: user
+  template:
+    metadata:
+      labels:
+        name: user
+    spec:
+      containers:
+      - env:
+        - name: mongo
+          value: user-db:27017
+        image: weaveworksdemos/user:0.4.7
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 300
+          periodSeconds: 3
+        name: user
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 180
+          periodSeconds: 3
+        resources:
+          limits:
+            cpu: 300m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_BIND_SERVICE
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scrape: 'true'
+  labels:
+    name: user
+  name: user
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    name: user
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: user-db
+  name: user-db
+  namespace: log-enabled-sockshop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: user-db
+  template:
+    metadata:
+      labels:
+        name: user-db
+    spec:
+      containers:
+      - image: weaveworksdemos/user-db:0.3.0
+        name: user-db
+        ports:
+        - containerPort: 27017
+          name: mongo
+        securityContext:
+          capabilities:
+            add:
+            - CHOWN
+            - SETGID
+            - SETUID
+            drop:
+            - all
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp-volume
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      volumes:
+      - emptyDir:
+          medium: Memory
+        name: tmp-volume
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: user-db
+  name: user-db
+  namespace: log-enabled-sockshop
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+  selector:
+    name: user-db
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: emailservice
-  namespace: log-enabled-onlineboutique
+  name: carts
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - emailservice
+  - carts
   http:
   - route:
     - destination:
-        host: emailservice
+        host: carts
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: checkoutservice
-  namespace: log-enabled-onlineboutique
+  name: carts-db
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - checkoutservice
+  - carts-db
   http:
   - route:
     - destination:
-        host: checkoutservice
+        host: carts-db
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: recommendationservice
-  namespace: log-enabled-onlineboutique
+  name: catalogue
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - recommendationservice
+  - catalogue
   http:
   - route:
     - destination:
-        host: recommendationservice
+        host: catalogue
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: frontend
-  namespace: log-enabled-onlineboutique
+  name: catalogue-db
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - frontend
+  - catalogue-db
   http:
   - route:
     - destination:
-        host: frontend
+        host: catalogue-db
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: frontend-external
-  namespace: log-enabled-onlineboutique
+  name: front-end
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - frontend-external
+  - front-end
   http:
   - route:
     - destination:
-        host: frontend-external
+        host: front-end
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: paymentservice
-  namespace: log-enabled-onlineboutique
+  name: orders
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - paymentservice
+  - orders
   http:
   - route:
     - destination:
-        host: paymentservice
+        host: orders
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: productcatalogservice
-  namespace: log-enabled-onlineboutique
+  name: orders-db
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - productcatalogservice
+  - orders-db
   http:
   - route:
     - destination:
-        host: productcatalogservice
+        host: orders-db
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: cartservice
-  namespace: log-enabled-onlineboutique
+  name: payment
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - cartservice
+  - payment
   http:
   - route:
     - destination:
-        host: cartservice
+        host: payment
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: currencyservice
-  namespace: log-enabled-onlineboutique
+  name: queue-master
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - currencyservice
+  - queue-master
   http:
   - route:
     - destination:
-        host: currencyservice
+        host: queue-master
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: shippingservice
-  namespace: log-enabled-onlineboutique
+  name: rabbitmq
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - shippingservice
+  - rabbitmq
   http:
   - route:
     - destination:
-        host: shippingservice
+        host: rabbitmq
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: redis-cart
-  namespace: log-enabled-onlineboutique
+  name: session-db
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - redis-cart
+  - session-db
   http:
   - route:
     - destination:
-        host: redis-cart
+        host: session-db
     timeout: 15s
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: adservice
-  namespace: log-enabled-onlineboutique
+  name: shipping
+  namespace: log-enabled-sockshop
 spec:
   hosts:
-  - adservice
+  - shipping
   http:
   - route:
     - destination:
-        host: adservice
+        host: shipping
+    timeout: 15s
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: user
+  namespace: log-enabled-sockshop
+spec:
+  hosts:
+  - user
+  http:
+  - route:
+    - destination:
+        host: user
+    timeout: 15s
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: user-db
+  namespace: log-enabled-sockshop
+spec:
+  hosts:
+  - user-db
+  http:
+  - route:
+    - destination:
+        host: user-db
     timeout: 15s
 
 ---

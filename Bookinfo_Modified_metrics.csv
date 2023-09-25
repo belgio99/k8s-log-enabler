@@ -1,14 +1,57 @@
-Running tests simulating 1 users...
-Running 1m test @ http://127.0.0.1:54815/productpage?u=normal
-  1 threads and 1 connections
+Running tests simulating 8 users...
+Running 1m test @ http://127.0.0.1:55003/productpage?u=normal
+  8 threads and 8 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    53.26ms   19.55ms 353.01ms   98.11%
-    Req/Sec    19.16      2.82    30.00     92.86%
+    Latency    67.32ms   40.92ms 625.49ms   84.16%
+    Req/Sec    15.33      6.99    50.00     90.89%
   Latency Distribution
-     50%   51.20ms
-     75%   52.34ms
-     90%   53.82ms
-     99%  123.76ms
-  1154 requests in 1.00m, 6.71MB read
-Requests/sec:     19.23
-Transfer/sec:    114.49KB
+     50%   61.79ms
+     75%   78.44ms
+     90%  102.44ms
+     99%  177.04ms
+  7388 requests in 1.00m, 42.94MB read
+Requests/sec:    122.92
+Transfer/sec:    731.58KB
+Running tests simulating 25 users...
+Running 1m test @ http://127.0.0.1:55003/productpage?u=normal
+  8 threads and 25 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   108.07ms   28.55ms 261.49ms   69.64%
+    Req/Sec    27.78      8.83    60.00     76.01%
+  Latency Distribution
+     50%  105.37ms
+     75%  127.16ms
+     90%  145.08ms
+     99%  178.99ms
+  13324 requests in 1.00m, 77.42MB read
+Requests/sec:    221.85
+Transfer/sec:      1.29MB
+Running tests simulating 50 users...
+Running 1m test @ http://127.0.0.1:55003/productpage?u=normal
+  8 threads and 50 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   219.20ms   35.49ms 440.44ms   70.91%
+    Req/Sec    27.48     12.24    60.00     59.67%
+  Latency Distribution
+     50%  215.57ms
+     75%  239.14ms
+     90%  265.51ms
+     99%  322.16ms
+  13133 requests in 1.00m, 76.30MB read
+Requests/sec:    218.59
+Transfer/sec:      1.27MB
+Running tests simulating 200 users...
+Running 1m test @ http://127.0.0.1:55003/productpage?u=normal
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   941.63ms  107.88ms   1.83s    78.26%
+    Req/Sec    27.40     15.53   100.00     63.72%
+  Latency Distribution
+     50%  933.33ms
+     75%  976.16ms
+     90%    1.08s 
+     99%    1.27s 
+  12656 requests in 1.00m, 73.42MB read
+  Socket errors: connect 0, read 66, write 0, timeout 0
+Requests/sec:    210.67
+Transfer/sec:      1.22MB
