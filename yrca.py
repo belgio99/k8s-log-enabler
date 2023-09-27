@@ -8,15 +8,18 @@ def produce_yrca_logs(requestJson, responseJson):
     
     responseCode = requestJson.get("response_code", None)
     requestID = requestJson.get("x-request-id", "")
-    requestServiceName = "k8s_" + requestJson.get("pod_name", "").split("-")[0]
+    requestServiceName = "".join(requestJson.get("pod_name", "").rsplit("-", 2)[0].split("-"))
     requestStartTime = requestJson.get("start_time", "")
     responseFlags = requestJson.get("response_flags", "")
 
+    if not requestID:
+        return
+
     if responseJson:
-        responseServiceName = "k8s_" + responseJson["pod_name"].split("-")[0]
+        responseServiceName = "".join(responseJson.get("pod_name", "").rsplit("-", 2)[0].split("-"))
         responseStartTime = responseJson["start_time"]
     else:
-        responseServiceName = requestJson.get("authority", "")
+        responseServiceName = requestJson.get("authority", "").split(":")[0]
     
     # Define common print pattern
     def append_log(time, message_pattern, severity, *args):
@@ -25,37 +28,35 @@ def produce_yrca_logs(requestJson, responseJson):
         event_msg = message_pattern.format(*args)
         log_entry = {
             "severity": severity,
-            "container_name": requestServiceName,
+            "container_name": "k8s_" + requestServiceName,
             "event": event_msg,
             "message": f"{formatted_time} {severity} {requestServiceName} --- {event_msg}",
             "timestamp": formatted_time,
             "@timestamp": time
         }
-        logs.append(log_entry)
+        logs.append(json.dumps(log_entry))
 
-    if requestServiceName != responseServiceName:
-        append_log(requestStartTime, "Sending message to {} (request_id: [{}])", "INFO", responseServiceName, requestID)
+    if requestServiceName == responseServiceName:
+        return
+    append_log(requestStartTime, "Sending message to {} (request_id: [{}])", "INFO", responseServiceName, requestID)
 
-
-    if not responseJson or responseCode == 0:
+    if not responseJson or responseCode not in [200, None]:
         requestDateTime = datetime.strptime(requestStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta = timedelta(milliseconds=requestJson["duration"])
         requestEndTime = (requestDateTime + delta).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
         if responseCode == 0 or responseFlags == "UH":
-            append_log(requestEndTime, "Failing to contact {} (request_id: [{}]). Root cause: ", "ERROR", requestJson["authority"], requestID)
-        else:
+            append_log(requestEndTime, "Failing to contact {} (request_id: [{}]). Root cause: ", "ERROR", requestJson["authority"].split(":")[0], requestID)
+        elif responseCode != 200:
             append_log(requestEndTime, "Error response (code: {}) received from {} (request_id: [{}])", "ERROR", responseCode, responseServiceName, requestID)
-    else:
-        service_from_authority = requestJson.get("authority", "").split(":")[0]
-        if requestServiceName[4:] != service_from_authority:
-            append_log(responseStartTime, "Received POST request from {} (request_id: {})", "INFO", requestJson.get("authority", ""), requestID)
+    if responseJson:
+        buf = responseServiceName
+        responseServiceName = requestServiceName
+        requestServiceName = buf
+        append_log(responseStartTime, "Received POST request from {} (request_id: {})", "INFO", responseServiceName, requestID)
         responseDateTime = datetime.strptime(responseStartTime, '%Y-%m-%dT%H:%M:%S.%fZ')
         delta = timedelta(milliseconds=responseJson["duration"])
         responseEndTime = (responseDateTime + delta).strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-4] + "Z"
-        if responseCode == 200:
-            append_log(responseEndTime, "Answered to POST request from {} with code: {} (request_id: {})", "INFO", requestJson["authority"], responseCode, requestID)
-        else:
-            append_log(responseEndTime, "Error response (code: {}) received from {} (request_id: [{}])", "ERROR", responseCode, responseServiceName, requestID)
+        append_log(responseEndTime, "Answered to POST request from {} with code: {} (request_id: {})", "INFO", responseServiceName, responseCode, requestID)
 
 
 

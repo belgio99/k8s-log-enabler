@@ -3093,17 +3093,17 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: curl-deployment
+  name: curl
   namespace: log-enabled-chaosecho
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: curl-app
+      app: curl
   template:
     metadata:
       labels:
-        app: curl-app
+        app: curl
     spec:
       containers:
       - args:
@@ -3115,25 +3115,121 @@ spec:
         - /bin/sh
         env:
         - name: A
-          value: chaosecho:80
+          value: frontend:80
         image: radial/busyboxplus:curl
-        name: curl-container
+        name: curl
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chaosecho
+  name: frontend
   namespace: log-enabled-chaosecho
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chaosecho
+      app: frontend
   template:
     metadata:
       labels:
-        app: chaosecho
+        app: frontend
+    spec:
+      containers:
+      - env:
+        - name: DEPENDS_ON
+          value: middle
+        - name: TIMEOUT
+          value: '10000'
+        - name: P_INVOKE
+          value: '100'
+        - name: P_FAIL
+          value: '50'
+        - name: P_CRASH
+          value: '0'
+        image: diunipisocc/chaosecho:1
+        name: chaosecho-frontend
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: log-enabled-chaosecho
+spec:
+  ports:
+  - nodePort: 30081
+    port: 80
+    targetPort: 80
+  selector:
+    app: frontend
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: middle
+  namespace: log-enabled-chaosecho
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: middle
+  template:
+    metadata:
+      labels:
+        app: middle
+    spec:
+      containers:
+      - env:
+        - name: DEPENDS_ON
+          value: backend
+        - name: TIMEOUT
+          value: '10000'
+        - name: P_INVOKE
+          value: '100'
+        - name: P_FAIL
+          value: '90'
+        - name: P_CRASH
+          value: '0'
+        image: diunipisocc/chaosecho:1
+        name: chaosecho-middle
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: middle
+  namespace: log-enabled-chaosecho
+spec:
+  ports:
+  - nodePort: 30083
+    port: 80
+    targetPort: 80
+  selector:
+    app: middle
+  type: NodePort
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: log-enabled-chaosecho
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
     spec:
       containers:
       - env:
@@ -3144,11 +3240,11 @@ spec:
         - name: P_INVOKE
           value: '0'
         - name: P_FAIL
-          value: '75'
+          value: '90'
         - name: P_CRASH
-          value: '25'
+          value: '70'
         image: diunipisocc/chaosecho:1
-        name: chaosecho
+        name: chaosecho-backend
         ports:
         - containerPort: 80
 
@@ -3156,30 +3252,60 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: chaosecho
+  name: backend
   namespace: log-enabled-chaosecho
 spec:
   ports:
-  - nodePort: 30080
+  - nodePort: 30082
     port: 80
     targetPort: 80
   selector:
-    app: chaosecho
+    app: backend
   type: NodePort
 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: chaosecho
+  name: frontend
   namespace: log-enabled-chaosecho
 spec:
   hosts:
-  - chaosecho
+  - frontend
   http:
   - route:
     - destination:
-        host: chaosecho
+        host: frontend
+    timeout: 15s
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: middle
+  namespace: log-enabled-chaosecho
+spec:
+  hosts:
+  - middle
+  http:
+  - route:
+    - destination:
+        host: middle
+    timeout: 15s
+
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: backend
+  namespace: log-enabled-chaosecho
+spec:
+  hosts:
+  - backend
+  http:
+  - route:
+    - destination:
+        host: backend
     timeout: 15s
 
 ---

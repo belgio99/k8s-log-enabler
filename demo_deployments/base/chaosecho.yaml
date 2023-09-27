@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: curl-deployment
+  name: curl
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: curl-app
+      app: curl
   template:
     metadata:
       labels:
-        app: curl-app
+        app: curl
     spec:
       containers:
-      - name: curl-container
+      - name: curl
         image: radial/busyboxplus:curl
         env:
         - name: A
-          value: "chaosecho:80" # replace with your desired value or from ConfigMap/Secret
+          value: "frontend:80"
         command: ["/bin/sh"]
         args:
         - "-c"
@@ -26,25 +26,124 @@ spec:
             curl -X POST -H 'Content-Type: application/json' -H 'Cache-Control: no-cache' -i http://$A/echo --data '{ "content": "FRONTEND REQUEST", "hash": "1" }' --silent
             sleep 1
           done
-
 ---
-# Deployment for chaosecho
+# Deployment for frontend
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chaosecho
+  name: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chaosecho
+      app: frontend
   template:
     metadata:
       labels:
-        app: chaosecho
+        app: frontend
     spec:
       containers:
-      - name: chaosecho
+      - name: chaosecho-frontend
+        image: diunipisocc/chaosecho:1
+        env:
+        - name: DEPENDS_ON
+          value: "middle"
+        - name: TIMEOUT
+          value: "10000"
+        - name: P_INVOKE
+          value: "100"
+        - name: P_FAIL
+          value: "50"
+        - name: P_CRASH
+          value: "0"
+        ports:
+        - containerPort: 80
+
+---
+
+# Service for frontend
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30081
+  selector:
+    app: frontend
+
+---
+
+# Deployment for middle
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: middle
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: middle
+  template:
+    metadata:
+      labels:
+        app: middle
+    spec:
+      containers:
+      - name: chaosecho-middle
+        image: diunipisocc/chaosecho:1
+        env:
+        - name: DEPENDS_ON
+          value: "backend"
+        - name: TIMEOUT
+          value: "10000"
+        - name: P_INVOKE
+          value: "100"
+        - name: P_FAIL
+          value: "90"
+        - name: P_CRASH
+          value: "0"
+        ports:
+        - containerPort: 80
+
+---
+
+# Service for middle
+apiVersion: v1
+kind: Service
+metadata:
+  name: middle
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30083
+  selector:
+    app: middle
+
+---
+
+# Deployment for backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: chaosecho-backend
         image: diunipisocc/chaosecho:1
         env:
         - name: DEPENDS_ON
@@ -54,24 +153,25 @@ spec:
         - name: P_INVOKE
           value: "0"
         - name: P_FAIL
-          value: "75"
+          value: "90"
         - name: P_CRASH
-          value: "25"
+          value: "70"
         ports:
         - containerPort: 80
 
 ---
 
-# Service for chaosecho
+# Service for backend
 apiVersion: v1
 kind: Service
 metadata:
-  name: chaosecho
+  name: backend
 spec:
   type: NodePort
   ports:
     - port: 80
       targetPort: 80
-      nodePort: 30080
+      nodePort: 30082
   selector:
-    app: chaosecho
+    app: backend
+

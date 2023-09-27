@@ -229,7 +229,6 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
 
     logs = []
 
-    # While there are logs to fetch, keep fetching
 
     if format == "yrca":
         response = retrieve_logs(es, envoy_proxy_query)
@@ -240,24 +239,8 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
             formatted_log = f"{pod_name} {log_message}"
             yrca_logs.append(formatted_log)
 
-        yrca_final_logs = yrca_process_logs(yrca_logs)
-        response_dump_all = retrieve_logs(es, dump_all_query)
-
-        logs_dump_all = [
-            {
-                "severity": hit["_source"]["severity"] if "severity" in hit["_source"] else "INFO",
-                "container_name": "k8s_" + hit["_source"]["kubernetes"]["pod"]["name"].split("-")[0],
-                "event": hit["_source"]["message"].split("\n")[0],
-                "message": hit["_source"]["message"],
-                "timestamp": datetime.strptime(hit["_source"]["@timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
-                "@timestamp": hit["_source"]["@timestamp"]
-            }
-            for hit in response_dump_all
-        ]
-        return yrca_final_logs + logs_dump_all
-
-
-
+        return yrca_process_logs(yrca_logs)
+        
 
     if dump_all:
         query = dump_all_query
@@ -312,7 +295,7 @@ def main():
     if args.output:
         with open(args.output, "w", encoding="utf-8") as stream:
             if isinstance(output, list):
-                stream.write("\n".join(json.dumps(d) for d in output))
+                stream.write("\n".join(d for d in output))
             else:
                 stream.write(output)
             print(f"Output file written to {args.output}")
