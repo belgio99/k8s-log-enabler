@@ -9,7 +9,6 @@ import json
 from elasticsearch import Elasticsearch
 from yrca import yrca_process_logs
 from utils import load_manifests, build_merged_text, is_valid_k8s_namespace, is_valid_timeout
-from datetime import datetime
 
 DEFAULT_NAMESPACE = "log-enabled"
 
@@ -192,10 +191,8 @@ def connect_elasticsearch(es_host="localhost", port=9200, dump_all=False, format
         print(f"Error: The namespace {final_namespace} is not valid. Please specify a valid namespace name.")
         return None
 
-    # Connect to the Elasticsearch instance
     es = Elasticsearch([{"host": es_host, "port": port, "scheme": "http"}])
 
-    # Define the query
     envoy_proxy_query = {
         "bool": {
             "must": [

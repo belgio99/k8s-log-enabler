@@ -21,7 +21,6 @@ def produce_yrca_logs(requestJson, responseJson):
     else:
         responseServiceName = requestJson.get("authority", "").split(":")[0]
     
-    # Define common print pattern
     def append_log(time, message_pattern, severity, *args):
         timestamp_format = "%Y-%m-%dT%H:%M:%S.%fZ"
         formatted_time = datetime.strptime(time, timestamp_format).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
