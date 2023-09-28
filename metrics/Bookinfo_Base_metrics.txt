@@ -1,0 +1,57 @@
+Running tests simulating 8 users...
+Running 1m test @ http://127.0.0.1:54198/productpage?u=normal
+  8 threads and 8 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    34.62ms   28.64ms 515.12ms   96.21%
+    Req/Sec    31.46      7.24    50.00     60.34%
+  Latency Distribution
+     50%   29.42ms
+     75%   30.96ms
+     90%   36.01ms
+     99%  145.20ms
+  14920 requests in 1.00m, 72.86MB read
+Requests/sec:    248.26
+Transfer/sec:      1.21MB
+Running tests simulating 25 users...
+Running 1m test @ http://127.0.0.1:54198/productpage?u=normal
+  8 threads and 25 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    89.18ms   19.22ms 197.91ms   74.09%
+    Req/Sec    33.46      9.84    80.00     79.12%
+  Latency Distribution
+     50%   88.26ms
+     75%   98.41ms
+     90%  113.11ms
+     99%  143.74ms
+  16094 requests in 1.00m, 78.47MB read
+Requests/sec:    267.86
+Transfer/sec:      1.31MB
+Running tests simulating 50 users...
+Running 1m test @ http://127.0.0.1:54198/productpage?u=normal
+  8 threads and 50 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   180.12ms   24.49ms 314.32ms   74.35%
+    Req/Sec    33.57     15.16   100.00     59.98%
+  Latency Distribution
+     50%  177.93ms
+     75%  194.72ms
+     90%  208.50ms
+     99%  246.33ms
+  15954 requests in 1.00m, 77.76MB read
+Requests/sec:    265.55
+Transfer/sec:      1.29MB
+Running tests simulating 200 users...
+Running 1m test @ http://127.0.0.1:54198/productpage?u=normal
+  8 threads and 200 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   784.47ms   91.08ms   1.92s    93.09%
+    Req/Sec    34.29     23.73   141.00     59.37%
+  Latency Distribution
+     50%  773.73ms
+     75%  798.92ms
+     90%  846.38ms
+     99%    1.04s 
+  15231 requests in 1.00m, 74.32MB read
+  Socket errors: connect 0, read 66, write 0, timeout 1
+Requests/sec:    253.53
+Transfer/sec:      1.24MB
