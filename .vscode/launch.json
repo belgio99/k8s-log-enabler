@@ -36,6 +36,22 @@
          "program": "${workspaceFolder}/main.py",
          "console": "integratedTerminal",
          "args": ["-c", "localhost", "-p", "${input:es_port}"]
+      },
+      {
+         "name": "Python: DB Connection with podname",
+         "type": "python",
+         "request": "launch",
+         "program": "${workspaceFolder}/main.py",
+         "console": "integratedTerminal",
+         "args": ["-c", "localhost", "-p", "${input:es_port}", "--dump-all", "-f", "gelf"]
+      },
+      {
+         "name": "Python: DB Connection - bookinfo",
+         "type": "python",
+         "request": "launch",
+         "program": "${workspaceFolder}/main.py",
+         "console": "integratedTerminal",
+         "args": ["-c", "localhost", "-p", "${input:es_port}", "-n", "chaosecho"]
       }
    ],
    "inputs": [
@@ -43,7 +59,7 @@
           "id": "es_port",
           "type": "promptString",
           "description": "Enter the Minikube port number",
-          "default": "65512"  // optional default value
+          "default": "54083"  // optional default value
       }
    ]
 }

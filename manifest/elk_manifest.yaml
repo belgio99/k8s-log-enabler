@@ -234,8 +234,7 @@ spec:
         image: docker.elastic.co/beats/filebeat:7.15.0
         args: [
           "-c", "/etc/filebeat/filebeat.yml",
-          "-e",
-          "-d", "*",
+          "-e"
         ]
         securityContext:
           runAsUser: 0
@@ -292,5 +291,24 @@ data:
               logs_path: "/var/log/containers/"
       - drop_event.when.not.or:
         - contains.kubernetes.namespace: "log-enabled"
+      - add_fields:
+          target: ''
+          fields:
+            severity: INFO
+          when:
+            equals:
+              stream: "stdout"
+      - add_fields:
+          target: ''
+          fields:
+            severity: ERROR
+          when:
+            or:
+              - equals:
+                  stream: "stderr"
+              - contains:
+                  message: "ERROR"
+
+
     output.logstash:
       hosts: ['${LOGSTASH_HOSTS}']
