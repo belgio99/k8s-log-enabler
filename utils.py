@@ -1,9 +1,11 @@
-import os
-import re
-
 """
 Utility functions
 """
+
+import os
+import re
+
+
 def load_manifests(filenames):
     """
     Load multiple manifest contents from a list of files.
@@ -41,14 +43,15 @@ def is_valid_k8s_namespace(namespace_name):
     Returns:
     - bool: True if the namespace name is valid, otherwise False.
     """
-    
+
     if len(namespace_name) > 63:
         return False
 
     # Regex pattern used to match valid namespace names
-    pattern = re.compile('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$')
-    
+    pattern = re.compile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+
     return bool(pattern.match(namespace_name))
+
 
 def is_valid_timeout(timeout_str):
     """
@@ -60,8 +63,8 @@ def is_valid_timeout(timeout_str):
     Returns:
     - bool: True if the timeout format is valid, otherwise False.
     """
-    
+
     # Regex pattern to match valid timeout strings
-    pattern = re.compile('^[0-9]+[hms]$')
-    
+    pattern = re.compile("^[0-9]+[hms]$")
+
     return bool(pattern.match(timeout_str))
